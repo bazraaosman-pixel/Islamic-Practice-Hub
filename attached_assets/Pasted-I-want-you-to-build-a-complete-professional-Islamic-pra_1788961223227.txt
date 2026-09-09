@@ -1,0 +1,249 @@
+I want you to build a complete professional Islamic prayer mobile application from scratch.
+
+IMPORTANT:
+Do not create a simple demo, landing page, or web app.
+Build a real mobile application using the appropriate React Native / Expo architecture supported by Replit Mobile.
+
+PROJECT NAME:
+"نور الصلاة" (Noor Al-Salah)
+
+MAIN GOAL:
+Create a beautiful, modern, reliable Islamic companion app focused primarily on prayer times, Adhan notifications, Qibla direction, Quran, and daily Islamic remembrance.
+
+LANGUAGES:
+- Arabic as the primary language
+- English as a secondary language
+- The app must support RTL properly for Arabic.
+- Add a language selector in Settings.
+
+DESIGN:
+Create a premium, calm Islamic visual identity.
+Use a clean modern interface with elegant Islamic-inspired details.
+The UI must be simple and easy for all ages.
+Support both light mode and dark mode.
+Use excellent typography and spacing.
+Do not overcrowd the interface.
+
+MAIN FEATURES:
+
+1. HOME SCREEN
+Show:
+- Current date
+- Hijri date
+- Current location/city
+- Current time
+- Next prayer
+- Countdown until next prayer
+- All five daily prayer times:
+  Fajr
+  Dhuhr
+  Asr
+  Maghrib
+  Isha
+- Highlight the current/next prayer
+- Sunrise time
+- Quick access buttons for:
+  Quran
+  Qibla
+  Adhkar
+  Tasbih
+
+2. PRAYER TIMES
+Implement real prayer-time calculations.
+Do NOT hardcode prayer times.
+
+The user should be able to:
+- Use device location
+- Manually select a city
+- Change calculation method
+- Select madhhab/asr calculation method where supported
+- Adjust prayer times manually if necessary
+- Enable/disable individual prayer notifications
+
+Support common calculation methods such as:
+- Muslim World League
+- Egyptian General Authority of Survey
+- Umm al-Qura
+- University of Islamic Sciences, Karachi
+- ISNA
+
+Make the architecture flexible so more methods can be added later.
+
+3. ADHAN NOTIFICATIONS
+Create a proper notification architecture for:
+- Fajr
+- Dhuhr
+- Asr
+- Maghrib
+- Isha
+
+Allow the user to:
+- Enable/disable notifications
+- Choose notification sound where technically supported
+- Set notification preferences per prayer
+
+Handle notification permissions properly.
+
+4. QIBLA
+Create a dedicated Qibla screen.
+Use device compass/sensors where supported.
+Show:
+- A beautiful Qibla compass
+- Direction toward the Kaaba
+- Degree/direction
+- Instructions for calibration if required
+- A fallback message if the device does not provide the required sensor.
+
+5. QURAN
+Create a Quran section with:
+- Surah list
+- Surah details
+- Arabic Quran text
+- Surah number
+- Ayah numbers
+- Search
+- Bookmark/favorites
+- Last-read position
+- Continue reading
+
+Use a reliable Quran data source or local structured data.
+Do not invent Quran text.
+Do not generate Quran verses using AI.
+
+6. ADHKAR
+Create:
+- Morning Adhkar
+- Evening Adhkar
+- After-prayer Adhkar
+- Sleep Adhkar
+- General daily Adhkar
+
+Include:
+- Arabic text
+- Translation where appropriate
+- Counter for repeated adhkar
+- Progress indicator
+
+Use authentic/reliable source data.
+Do not invent religious texts.
+
+7. TASBIH
+Create a digital Tasbih counter:
+- Large central counter
+- + button
+- Reset
+- Preset dhikr
+- User can choose a target number
+- Save progress locally
+
+8. HIJRI CALENDAR
+Show:
+- Current Hijri date
+- Gregorian date
+- Basic Islamic calendar information
+
+Make the date conversion architecture replaceable if adjustments are needed.
+
+9. SETTINGS
+Create a complete Settings screen containing:
+- Language
+- Light/Dark/System theme
+- Location
+- Calculation method
+- Madhhab
+- Prayer notification settings
+- Adhan settings
+- Manual prayer-time adjustments
+- Qibla calibration/help
+- About the app
+- Privacy
+- Version
+
+10. OFFLINE SUPPORT
+The application should work offline as much as reasonably possible.
+Prayer calculations should not require internet after required location/configuration is available.
+Cache appropriate Quran and Adhkar data locally.
+
+11. DATA AND ARCHITECTURE
+Use clean, maintainable architecture.
+Separate:
+- UI
+- Prayer calculation logic
+- Location services
+- Notifications
+- Quran data
+- Adhkar data
+- Settings
+- Local storage
+
+Use TypeScript.
+Create reusable components.
+Keep the code clean and production-oriented.
+
+12. ERROR HANDLING
+Handle:
+- Location permission denied
+- Notification permission denied
+- No GPS
+- No compass/sensor
+- Network unavailable
+- Invalid location
+- API failures
+- Missing data
+
+Never let the application crash because a permission or service is unavailable.
+
+13. MOBILE UX
+Make all screens responsive for different Android and iPhone screen sizes.
+Support safe areas.
+Support RTL correctly.
+Make buttons large enough for comfortable touch interaction.
+
+14. SECURITY AND PRIVACY
+Do not collect unnecessary personal information.
+Do not expose API keys in client code.
+Use environment variables for secrets.
+Do not store sensitive information unnecessarily.
+
+15. PROJECT QUALITY
+Before finishing:
+- Check the entire project for errors.
+- Fix TypeScript errors.
+- Fix navigation issues.
+- Fix layout issues.
+- Make sure all buttons and navigation work.
+- Make sure Arabic RTL works correctly.
+- Make sure the app can run through Expo.
+- Make the project easy to continue developing.
+
+IMPORTANT DEVELOPMENT RULE:
+Build the application incrementally and verify each major feature before moving to the next one.
+
+FIRST TASK:
+Do NOT attempt to implement every feature at once.
+
+First:
+1. Create the project architecture.
+2. Set up React Native / Expo correctly.
+3. Set up TypeScript.
+4. Set up navigation.
+5. Create the main theme/design system.
+6. Create the bottom navigation.
+7. Create these initial screens:
+   - Home
+   - Prayer Times
+   - Qibla
+   - Quran
+   - Adhkar
+   - Settings
+8. Create beautiful placeholder content where real data is not implemented yet.
+9. Make sure the project runs successfully.
+
+After completing this first phase, STOP and tell me exactly:
+- What you created
+- Which files you created
+- How to run the app
+- Whether there are any errors
+- What we should implement next
+
+Do not make major architectural changes without explaining them to me first.
