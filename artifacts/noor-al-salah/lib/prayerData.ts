@@ -33,6 +33,70 @@ export const remembranceCategories = [
   { id: 'sleep', arabic: 'أذكار النوم', english: 'Before Sleep', icon: 'moon', count: '8 أذكار' },
 ];
 
+export type AdhkarPeriod = 'morning' | 'evening';
+
+export type DhikrEntry = {
+  id: string;
+  arabic: string;
+  translation: string;
+  repeat: number;
+};
+
+export const adhkarSets: Record<AdhkarPeriod, DhikrEntry[]> = {
+  morning: [
+    {
+      id: 'morning-praise',
+      arabic: 'سُبْحَانَ اللهِ وَبِحَمْدِهِ',
+      translation: 'تنزيه الله وحمده',
+      repeat: 100,
+    },
+    {
+      id: 'morning-contentment',
+      arabic: 'رَضِيتُ بِاللهِ رَبًّا، وَبِالإِسْلَامِ دِينًا، وَبِمُحَمَّدٍ ﷺ نَبِيًّا',
+      translation: 'تجديد الرضا بالله والإسلام ورسوله',
+      repeat: 3,
+    },
+    {
+      id: 'morning-wellbeing',
+      arabic: 'اللَّهُمَّ إِنِّي أَسْأَلُكَ العَفْوَ وَالعَافِيَةَ فِي الدُّنْيَا وَالآخِرَةِ',
+      translation: 'دعاء بالعفو والعافية في الدنيا والآخرة',
+      repeat: 1,
+    },
+    {
+      id: 'morning-protection',
+      arabic: 'أَعُوذُ بِكَلِمَاتِ اللهِ التَّامَّاتِ مِنْ شَرِّ مَا خَلَقَ',
+      translation: 'الاستعاذة بكلمات الله التامات',
+      repeat: 3,
+    },
+  ],
+  evening: [
+    {
+      id: 'evening-praise',
+      arabic: 'سُبْحَانَ اللهِ وَبِحَمْدِهِ',
+      translation: 'تنزيه الله وحمده',
+      repeat: 100,
+    },
+    {
+      id: 'evening-contentment',
+      arabic: 'رَضِيتُ بِاللهِ رَبًّا، وَبِالإِسْلَامِ دِينًا، وَبِمُحَمَّدٍ ﷺ نَبِيًّا',
+      translation: 'تجديد الرضا بالله والإسلام ورسوله',
+      repeat: 3,
+    },
+    {
+      id: 'evening-protection',
+      arabic: 'أَعُوذُ بِكَلِمَاتِ اللهِ التَّامَّاتِ مِنْ شَرِّ مَا خَلَقَ',
+      translation: 'الاستعاذة بكلمات الله التامات',
+      repeat: 3,
+    },
+    {
+      id: 'evening-wellbeing',
+      arabic: 'اللَّهُمَّ إِنِّي أَسْأَلُكَ العَفْوَ وَالعَافِيَةَ فِي الدُّنْيَا وَالآخِرَةِ',
+      translation: 'دعاء بالعفو والعافية في الدنيا والآخرة',
+      repeat: 1,
+    },
+  ],
+};
+
 export function getTimeInMinutes(time: string) {
   const [hours, minutes] = time.split(':').map(Number);
   return hours * 60 + minutes;

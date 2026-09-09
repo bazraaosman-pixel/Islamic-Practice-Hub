@@ -26,6 +26,7 @@ function RootLayoutNav() {
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="qibla" options={{ headerShown: false }} />
       <Stack.Screen name="tasbih" options={{ headerShown: false }} />
+      <Stack.Screen name="adhkar-detail" options={{ headerShown: false }} />
     </Stack>
   );
 }
