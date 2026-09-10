@@ -7,6 +7,10 @@ import type { Language } from '@/context/PreferencesContext';
 const IDS_KEY = '@noor-al-salah/prayer-notification-ids';
 export type BuiltInAdhan = 'makkah' | 'madinah';
 export type AdhanChoice = BuiltInAdhan | 'custom';
+export type SchedulablePrayer = 'fajr' | 'dhuhr' | 'asr' | 'maghrib' | 'isha';
+export type PrayerAlertSound = BuiltInAdhan | 'silent';
+export type PrayerAlertConfig = { enabled: boolean; sound: PrayerAlertSound; offsetMinutes: number };
+export type PrayerAlertSettings = Record<SchedulablePrayer, PrayerAlertConfig>;
 export type CustomAdhan = { uri: string; fileName: string };
 export const ADHAN_SOUNDS: Record<BuiltInAdhan, string> = {
   makkah: 'makkah-adhan.wav',
@@ -17,9 +21,10 @@ export const ADHAN_AUDIO_ASSETS: Record<BuiltInAdhan, number> = {
   madinah: require('../assets/audio/madinah-adhan.wav'),
 };
 const CHANNEL_IDS: Record<BuiltInAdhan, string> = {
-  makkah: 'prayer-adhan-makkah-v1',
-  madinah: 'prayer-adhan-madinah-v1',
+  makkah: 'prayer-adhan-makkah-v2',
+  madinah: 'prayer-adhan-madinah-v2',
 };
+const SILENT_CHANNEL_ID = 'prayer-adhan-silent-v1';
 
 export const prayerNotificationsSupported =
   Platform.OS !== 'web' &&
@@ -41,39 +46,67 @@ async function configureNotificationHandler() {
   const Notifications = await getNotificationsModule();
   if (!Notifications) return;
   Notifications.setNotificationHandler({
-    handleNotification: async () => ({ shouldShowBanner: true, shouldShowList: true, shouldPlaySound: true, shouldSetBadge: false }),
+    handleNotification: async (notification) => ({ shouldShowBanner: true, shouldShowList: true, shouldPlaySound: notification.request.content.data?.silent !== true, shouldSetBadge: false }),
   });
 }
 
 void configureNotificationHandler();
 
-export function schedulePrayerNotifications(location: LocationData, method: CalculationMethodKey, madhab: 'shafi' | 'hanafi', adhan: AdhanChoice = 'makkah', language: Language = 'ar'): Promise<boolean> {
-  const operation = schedulingQueue.then(() => schedulePrayerNotificationsUnsafe(location, method, madhab, adhan, language));
+export function schedulePrayerNotifications(location: LocationData, method: CalculationMethodKey, madhab: 'shafi' | 'hanafi', adhan: AdhanChoice = 'makkah', language: Language = 'ar', settings?: PrayerAlertSettings, requestPermission = true): Promise<boolean> {
+  const operation = schedulingQueue.then(() => schedulePrayerNotificationsUnsafe(location, method, madhab, adhan, language, settings, requestPermission));
   schedulingQueue = operation.catch(() => undefined);
   return operation;
 }
 
-async function schedulePrayerNotificationsUnsafe(location: LocationData, method: CalculationMethodKey, madhab: 'shafi' | 'hanafi', adhan: AdhanChoice, language: Language): Promise<boolean> {
+async function schedulePrayerNotificationsUnsafe(location: LocationData, method: CalculationMethodKey, madhab: 'shafi' | 'hanafi', adhan: AdhanChoice, language: Language, settings: PrayerAlertSettings | undefined, requestPermission: boolean): Promise<boolean> {
   const Notifications = await getNotificationsModule();
   if (!Notifications) return false;
   await cancelPrayerNotificationsUnsafe();
-  const permission = await Notifications.requestPermissionsAsync();
+  const permission = requestPermission
+    ? await Notifications.requestPermissionsAsync()
+    : await Notifications.getPermissionsAsync();
   if (!permission.granted) throw new Error('notifications-denied');
   // Native notifications cannot read user document files. Always use the
   // bundled Makkah sound/channel for the custom choice.
   const notificationAdhan: BuiltInAdhan = adhan === 'custom' ? 'makkah' : adhan;
-  if (Platform.OS === 'android') await Notifications.setNotificationChannelAsync(CHANNEL_IDS[notificationAdhan], { name: language === 'ar' ? (notificationAdhan === 'makkah' ? 'أذان الحرم المكي' : 'أذان الحرم المدني') : (notificationAdhan === 'makkah' ? 'Makkah Adhan' : 'Madinah Adhan'), importance: Notifications.AndroidImportance.HIGH, sound: ADHAN_SOUNDS[notificationAdhan] });
+  if (Platform.OS === 'android') {
+    await Promise.all((['makkah', 'madinah'] as const).map((sound) =>
+      Notifications.setNotificationChannelAsync(CHANNEL_IDS[sound], {
+        name: language === 'ar'
+          ? (sound === 'makkah' ? 'أذان الحرم المكي' : 'أذان الحرم المدني')
+          : (sound === 'makkah' ? 'Makkah Adhan' : 'Madinah Adhan'),
+        importance: Notifications.AndroidImportance.HIGH,
+        sound: ADHAN_SOUNDS[sound],
+        audioAttributes: {
+          usage: Notifications.AndroidAudioUsage.ALARM,
+          contentType: Notifications.AndroidAudioContentType.SONIFICATION,
+        },
+        enableVibrate: true,
+        vibrationPattern: [0, 250, 250, 250],
+      }),
+    ));
+    await Notifications.setNotificationChannelAsync(SILENT_CHANNEL_ID, {
+      name: language === 'ar' ? 'صامت' : 'Silent',
+      importance: Notifications.AndroidImportance.DEFAULT,
+      sound: null,
+      enableVibrate: false,
+    });
+  }
   const now = new Date();
   const ids: string[] = [];
   for (let offset = 0; offset < 7; offset += 1) {
     const date = new Date(now);
     date.setDate(now.getDate() + offset);
-    const prayers = getPrayerTimes(location, date, method, madhab).filter((prayer) => prayer.id !== 'sunrise' && (prayer.timestamp ?? 0) > now.getTime());
+    const prayers = getPrayerTimes(location, date, method, madhab).filter((prayer) => prayer.id !== 'sunrise' && (settings?.[prayer.id as SchedulablePrayer]?.enabled ?? true));
     for (const prayer of prayers) {
+      const config = settings?.[prayer.id as SchedulablePrayer];
+      const sound = config?.sound ?? notificationAdhan;
+      const timestamp = (prayer.timestamp ?? 0) + (config?.offsetMinutes ?? 0) * 60 * 1000;
+      if (timestamp <= now.getTime()) continue;
       try {
         const id = await Notifications.scheduleNotificationAsync({
-          content: { title: language === 'ar' ? `حان وقت صلاة ${prayer.arabic}` : `Prayer time: ${prayer.english}`, body: language === 'ar' ? `${prayer.english} · ${prayer.time}` : `${prayer.english} prayer · ${prayer.time}`, sound: ADHAN_SOUNDS[notificationAdhan], data: { kind: 'prayer', prayer: prayer.id } },
-          trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: new Date(prayer.timestamp!), ...(Platform.OS === 'android' ? { channelId: CHANNEL_IDS[notificationAdhan] } : {}) },
+          content: { title: language === 'ar' ? `حان وقت صلاة ${prayer.arabic}` : `Prayer time: ${prayer.english}`, body: language === 'ar' ? `${prayer.english} · ${prayer.time}` : `${prayer.english} prayer · ${prayer.time}`, ...(sound !== 'silent' ? { sound: ADHAN_SOUNDS[sound] } : {}), data: { kind: 'prayer', prayer: prayer.id, silent: sound === 'silent' } },
+          trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: new Date(timestamp), ...(Platform.OS === 'android' ? { channelId: sound === 'silent' ? SILENT_CHANNEL_ID : CHANNEL_IDS[sound] } : {}) },
         });
         ids.push(id);
       } catch (error) {
@@ -82,7 +115,12 @@ async function schedulePrayerNotificationsUnsafe(location: LocationData, method:
       }
     }
   }
-  await AsyncStorage.setItem(IDS_KEY, JSON.stringify(ids));
+  try {
+    await AsyncStorage.setItem(IDS_KEY, JSON.stringify(ids));
+  } catch (error) {
+    await Promise.all(ids.map((id) => Notifications.cancelScheduledNotificationAsync(id).catch(() => undefined)));
+    throw error;
+  }
   return true;
 }
 
@@ -94,7 +132,13 @@ export async function cancelPrayerNotifications() {
 
 async function cancelPrayerNotificationsUnsafe() {
   const stored = await AsyncStorage.getItem(IDS_KEY);
-  const ids = stored ? JSON.parse(stored) as string[] : [];
+  let ids: string[] = [];
+  try {
+    const parsed: unknown = stored ? JSON.parse(stored) : [];
+    if (Array.isArray(parsed)) ids = parsed.filter((id): id is string => typeof id === 'string');
+  } catch {
+    ids = [];
+  }
   const Notifications = await getNotificationsModule();
   if (Notifications) {
     await Promise.all(ids.map((id) => Notifications.cancelScheduledNotificationAsync(id).catch(() => undefined)));

@@ -95,7 +95,7 @@ export function SectionHeading({ title, action }: { title: string; action?: stri
   );
 }
 
-export function PrayerRow({ prayer, active = false, onPress }: { prayer: Prayer; active?: boolean; onPress?: () => void }) {
+export function PrayerRow({ prayer, active = false, onPress, accessibilityLabel, accessibilityHint }: { prayer: Prayer; active?: boolean; onPress?: () => void; accessibilityLabel?: string; accessibilityHint?: string }) {
   const colors = useColors();
   const { t, isArabic } = useI18n();
   const iconColors: Record<Prayer['accent'], string> = {
@@ -115,6 +115,10 @@ export function PrayerRow({ prayer, active = false, onPress }: { prayer: Prayer;
   return (
     <Pressable
       testID={`prayer-${prayer.id}`}
+      accessible={!!onPress}
+      accessibilityRole={onPress ? 'button' : undefined}
+      accessibilityLabel={accessibilityLabel ?? (isArabic ? prayer.arabic : prayer.english)}
+      accessibilityHint={accessibilityHint}
       onPress={onPress}
         style={({ pressed }) => [
         styles.prayerRow,
@@ -131,7 +135,7 @@ export function PrayerRow({ prayer, active = false, onPress }: { prayer: Prayer;
       </View>
        {active ? <View style={[styles.nowPill, { backgroundColor: colors.primary }]}><Text style={[styles.nowPillText, { color: colors.primaryForeground }]}>{t('current')}</Text></View> : null}
       <Text style={[styles.prayerTime, { color: colors.foreground, writingDirection: 'ltr' }]}>{prayer.time}</Text>
-      <Feather name={isArabic ? 'chevron-left' : 'chevron-right'} size={17} color={colors.mutedForeground} />
+       {onPress ? <Feather name={isArabic ? 'chevron-left' : 'chevron-right'} size={17} color={colors.mutedForeground} /> : null}
     </Pressable>
   );
 }

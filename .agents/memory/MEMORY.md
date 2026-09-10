@@ -2,3 +2,4 @@
 - [Expo Go notifications](expo-go-notifications.md) — Never load expo-notifications in Expo Go; keep it behind the execution-environment guard.
 - [Adhan sound choices](adhan-sound-choices.md) — Keep preview and notification assets aligned; Android needs a stable channel per sound choice.
 - [Dynamic RTL layout](dynamic-rtl-layout.md) — Use explicit direction-aware rows; inherited RTL plus row-reverse causes double reversal on web.
+- [Prayer alert delivery](prayer-alert-delivery.md) — Keep a rolling native schedule; Expo background-task intervals are minutes and background runs must never prompt.

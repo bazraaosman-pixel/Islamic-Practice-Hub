@@ -16,6 +16,7 @@ import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { PreferencesProvider } from '@/context/PreferencesContext';
 import { useI18n } from '@/lib/i18n';
+import '@/lib/prayerBackgroundTask';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();

@@ -1,10 +1,11 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { Platform } from 'react-native';
+import { AppState, Platform } from 'react-native';
 import { DEFAULT_LOCATION, getCachedLocation, requestCurrentLocation } from '@/lib/location';
 import type { CalculationMethodKey, LocationData } from '@/lib/prayerData';
 import { cancelPrayerNotifications, prayerNotificationsSupported, schedulePrayerNotifications } from '@/lib/notifications';
-import type { AdhanChoice, CustomAdhan } from '@/lib/notifications';
+import type { AdhanChoice, CustomAdhan, PrayerAlertSettings, SchedulablePrayer } from '@/lib/notifications';
+import { registerPrayerBackgroundTask, unregisterPrayerBackgroundTask } from '@/lib/prayerBackgroundTask';
 
 export type ThemePreference = 'light' | 'dark' | 'system';
 export type Language = 'ar' | 'en';
@@ -25,6 +26,9 @@ type PreferencesContextValue = {
   setPrayerNotifications: (enabled: boolean) => void;
   setAdhan: (adhan: AdhanChoice) => void;
   setCustomAdhan: (custom: CustomAdhan | null) => Promise<void>;
+  prayerAlertSettings: PrayerAlertSettings;
+  setPrayerAlertSettings: (settings: PrayerAlertSettings) => void;
+  updatePrayerAlert: (prayer: SchedulablePrayer, config: PrayerAlertSettings[SchedulablePrayer]) => void;
   location: LocationData;
   locationError: string | null;
   refreshLocation: () => Promise<void>;
@@ -50,6 +54,9 @@ const PreferencesContext = createContext<PreferencesContextValue>({
   setPrayerNotifications: () => undefined,
   setAdhan: () => undefined,
   setCustomAdhan: async () => undefined,
+  prayerAlertSettings: {} as PrayerAlertSettings,
+  setPrayerAlertSettings: () => undefined,
+  updatePrayerAlert: () => undefined,
   location: DEFAULT_LOCATION,
   locationError: null,
   refreshLocation: async () => undefined,
@@ -60,6 +67,9 @@ const PreferencesContext = createContext<PreferencesContextValue>({
 });
 
 const STORAGE_KEY = '@noor-al-salah/preferences';
+const PRAYERS: SchedulablePrayer[] = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'];
+const defaultPrayerAlertSettings = (sound: 'makkah' | 'madinah' = 'makkah'): PrayerAlertSettings =>
+  Object.fromEntries(PRAYERS.map((id) => [id, { enabled: true, sound, offsetMinutes: 0 }])) as PrayerAlertSettings;
 
 export function PreferencesProvider({ children }: { children: React.ReactNode }) {
   const [theme, setThemeState] = useState<ThemePreference>('system');
@@ -70,6 +80,7 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
   const [prayerNotificationsError, setPrayerNotificationsError] = useState<string | null>(null);
   const [adhan, setAdhanState] = useState<AdhanChoice>('makkah');
   const [customAdhan, setCustomAdhanState] = useState<CustomAdhan | null>(null);
+  const [prayerAlertSettings, setPrayerAlertSettingsState] = useState<PrayerAlertSettings>(defaultPrayerAlertSettings());
   const [location, setLocation] = useState<LocationData>(DEFAULT_LOCATION);
   const [locationError, setLocationError] = useState<string | null>(null);
   const [calculationMethod, setCalculationMethodState] = useState<CalculationMethodKey>('egyptian');
@@ -83,7 +94,7 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
     const generation = ++scheduleGeneration.current;
     setPrayerNotificationsPending(true);
     setPrayerNotificationsError(null);
-    schedulePrayerNotifications(location, calculationMethod, madhab, adhan, language)
+    schedulePrayerNotifications(location, calculationMethod, madhab, adhan, language, prayerAlertSettings)
       .then((scheduled) => {
         if (generation !== scheduleGeneration.current) return;
         if (!scheduled) throw new Error('notifications-unavailable');
@@ -107,7 +118,7 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
         if (stored) {
           const parsed = JSON.parse(stored) as Partial<{
             theme: ThemePreference;
-            language: Language;
+             language: Language; prayerAlertSettings?: Partial<PrayerAlertSettings>;
             city: string;
              prayerNotifications: boolean; adhan: AdhanChoice; customAdhan: CustomAdhan | null; calculationMethod: CalculationMethodKey; madhab: 'shafi' | 'hanafi';
           }>;
@@ -130,6 +141,17 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
            } else if (parsed.adhan === 'custom') setAdhanState('makkah');
           if (parsed.calculationMethod) setCalculationMethodState(parsed.calculationMethod);
           if (parsed.madhab) setMadhabState(parsed.madhab);
+            const migratedSound = parsed.adhan === 'madinah' ? 'madinah' : 'makkah';
+            const storedAlerts = parsed.prayerAlertSettings;
+            setPrayerAlertSettingsState(PRAYERS.reduce((all, id) => {
+              const item = storedAlerts?.[id];
+              all[id] = {
+                enabled: typeof item?.enabled === 'boolean' ? item.enabled : true,
+                sound: item?.sound === 'madinah' || item?.sound === 'silent' || item?.sound === 'makkah' ? item.sound : migratedSound,
+                offsetMinutes: typeof item?.offsetMinutes === 'number' ? Math.max(-30, Math.min(30, Math.round(item.offsetMinutes))) : 0,
+              };
+              return all;
+            }, {} as PrayerAlertSettings));
         }
         if (cached) {
           setLocation(cached);
@@ -151,13 +173,22 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
   useEffect(() => {
     if (!hydrated || !prayerNotifications) return;
     runSchedule();
-  }, [hydrated, location, calculationMethod, madhab, adhan, language]);
+    void registerPrayerBackgroundTask();
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state === 'active') runSchedule();
+    });
+    return () => subscription.remove();
+    }, [hydrated, prayerNotifications, location, calculationMethod, madhab, adhan, language, prayerAlertSettings]);
+
+  useEffect(() => {
+    if (hydrated && !prayerNotifications) void unregisterPrayerBackgroundTask();
+  }, [hydrated, prayerNotifications]);
 
   const persistOrThrow = (next: Partial<{
     theme: ThemePreference;
     language: Language;
     city: string; calculationMethod: CalculationMethodKey; madhab: 'shafi' | 'hanafi';
-     prayerNotifications: boolean; adhan: AdhanChoice; customAdhan: CustomAdhan | null;
+      prayerNotifications: boolean; adhan: AdhanChoice; customAdhan: CustomAdhan | null; prayerAlertSettings: PrayerAlertSettings;
   }>) => {
     return AsyncStorage.mergeItem(STORAGE_KEY, JSON.stringify(next));
   };
@@ -218,6 +249,13 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
          setCustomAdhanState(next);
          setAdhanState(nextAdhan);
        },
+      prayerAlertSettings,
+      setPrayerAlertSettings: (next) => { setPrayerAlertSettingsState(next); persist({ prayerAlertSettings: next }); },
+      updatePrayerAlert: (prayer, config) => {
+        const next = { ...prayerAlertSettings, [prayer]: { ...config, offsetMinutes: Math.max(-30, Math.min(30, Math.round(config.offsetMinutes))) } };
+        setPrayerAlertSettingsState(next);
+        persist({ prayerAlertSettings: next });
+      },
       location,
       locationError,
       refreshLocation: async () => {
@@ -233,7 +271,7 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
       setCalculationMethod: (next) => { setCalculationMethodState(next); persist({ calculationMethod: next }); },
       setMadhab: (next) => { setMadhabState(next); persist({ madhab: next }); },
     }),
-    [theme, language, city, prayerNotifications, prayerNotificationsPending, prayerNotificationsError, adhan, customAdhan, location, locationError, calculationMethod, madhab],
+     [theme, language, city, prayerNotifications, prayerNotificationsPending, prayerNotificationsError, adhan, customAdhan, prayerAlertSettings, location, locationError, calculationMethod, madhab],
   );
 
   return <PreferencesContext.Provider value={value}>{children}</PreferencesContext.Provider>;
