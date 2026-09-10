@@ -53,7 +53,7 @@ const PreferencesContext = createContext<PreferencesContextValue>({
   location: DEFAULT_LOCATION,
   locationError: null,
   refreshLocation: async () => undefined,
-  calculationMethod: 'muslimWorldLeague',
+  calculationMethod: 'egyptian',
   madhab: 'shafi',
   setCalculationMethod: () => undefined,
   setMadhab: () => undefined,
@@ -72,7 +72,7 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
   const [customAdhan, setCustomAdhanState] = useState<CustomAdhan | null>(null);
   const [location, setLocation] = useState<LocationData>(DEFAULT_LOCATION);
   const [locationError, setLocationError] = useState<string | null>(null);
-  const [calculationMethod, setCalculationMethodState] = useState<CalculationMethodKey>('muslimWorldLeague');
+  const [calculationMethod, setCalculationMethodState] = useState<CalculationMethodKey>('egyptian');
   const [madhab, setMadhabState] = useState<'shafi' | 'hanafi'>('shafi');
   const [hydrated, setHydrated] = useState(false);
   // Every schedule attempt owns a generation. Older promise callbacks are

@@ -22,7 +22,7 @@ const methods: Record<CalculationMethodKey, () => ReturnType<typeof CalculationM
   singapore: CalculationMethod.Singapore,
 };
 
-export function getPrayerTimes(location: LocationData, date = new Date(), method: CalculationMethodKey = 'muslimWorldLeague', madhab: 'shafi' | 'hanafi' = 'shafi'): Prayer[] {
+export function getPrayerTimes(location: LocationData, date = new Date(), method: CalculationMethodKey = 'egyptian', madhab: 'shafi' | 'hanafi' = 'shafi'): Prayer[] {
   const params = methods[method]?.() ?? CalculationMethod.MuslimWorldLeague();
   params.madhab = madhab === 'hanafi' ? Madhab.Hanafi : Madhab.Shafi;
   const times = new PrayerTimes(new Coordinates(location.latitude, location.longitude), date, params);

@@ -18,7 +18,7 @@ export default function PrayerScreen() {
   const days = useMemo(() => [0, 1, 2].map((offset) => offset === 0 ? text('اليوم', 'Today') : offset === 1 ? text('غداً', 'Tomorrow') : new Intl.DateTimeFormat(isArabic ? 'ar-EG' : 'en-US', { weekday: 'long' }).format(new Date(Date.now() + offset * 86400000))), [isArabic]);
   const formattedDate = useMemo(() => new Intl.DateTimeFormat(isArabic ? 'ar-EG' : 'en-US', { day: 'numeric', month: 'long' }).format(selectedDate), [selectedDate, isArabic]);
   const nextPrayer = selectedDay === 0 ? getNextPrayer(new Date(), prayers) : null;
-  const methodLabel = calculationMethod === 'muslimWorldLeague' ? text('رابطة العالم الإسلامي', 'Muslim World League') : calculationMethod === 'egyptian' ? text('الهيئة المصرية', 'Egyptian General Authority') : calculationMethod;
+  const methodLabel = calculationMethod === 'muslimWorldLeague' ? text('رابطة العالم الإسلامي', 'Muslim World League') : calculationMethod === 'egyptian' ? text('مجمع الفقه الإسلامي (السودان)', 'Islamic Fiqh Academy (Sudan)') : calculationMethod;
 
   return (
     <ScreenShell>

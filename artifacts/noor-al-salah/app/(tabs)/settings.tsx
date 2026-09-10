@@ -97,8 +97,8 @@ export default function SettingsScreen() {
       text('طريقة حساب مواقيت الصلاة', 'Prayer time calculation method'),
       text('اختر الطريقة التي تريد استخدامها لحساب مواقيت الصلاة.', 'Choose the method used to calculate prayer times.'),
       [
+        { text: text('مجمع الفقه الإسلامي (السودان)', 'Islamic Fiqh Academy (Sudan)'), onPress: () => setCalculationMethod('egyptian') },
         { text: text('رابطة العالم الإسلامي', 'Muslim World League'), onPress: () => setCalculationMethod('muslimWorldLeague') },
-        { text: text('الهيئة المصرية العامة للمساحة', 'Egyptian General Authority of Survey'), onPress: () => setCalculationMethod('egyptian') },
         { text: text('إلغاء', 'Cancel'), style: 'cancel' },
       ],
     );
@@ -139,7 +139,7 @@ export default function SettingsScreen() {
          {prayerNotificationsError ? <Text accessibilityRole="alert" style={[styles.notificationError, { color: colors.accentForeground, textAlign: isEnglish ? 'left' : 'right' }]}>{text('تعذر تفعيل تنبيهات الصلاة. حاول مرة أخرى.', 'Prayer notifications could not be enabled. Please try again.')}</Text> : null}
       </View>
       <View style={[styles.settingGroup, { backgroundColor: colors.card, borderColor: colors.border }]}>
-           <SettingRow language={language} icon="clock" title={text('طريقة الحساب', 'Calculation method')} subtitle={calculationMethod === 'muslimWorldLeague' ? text('رابطة العالم الإسلامي', 'Muslim World League') : text('الهيئة المصرية العامة للمساحة', 'Egyptian General Authority of Survey')} onPress={openCalculationMethodPicker} />
+           <SettingRow language={language} icon="clock" title={text('طريقة الحساب', 'Calculation method')} subtitle={calculationMethod === 'muslimWorldLeague' ? text('رابطة العالم الإسلامي', 'Muslim World League') : text('مجمع الفقه الإسلامي (السودان)', 'Islamic Fiqh Academy (Sudan)')} onPress={openCalculationMethodPicker} />
            <SettingRow language={language} icon="sun" title={text('المذهب للعصر', 'Asr juristic method')} subtitle={madhab === 'shafi' ? text('الشافعي', 'Shafi') : text('الحنفي', 'Hanafi')} onPress={openMadhabPicker} />
           <SettingRow language={language} icon="compass" title={text('معايرة القبلة', 'Qibla calibration')} subtitle={text('مساعدة واتجاه الجهاز', 'Device guidance and direction')} onPress={openQiblaCalibration} />
            <View style={styles.adhanBlock}>
