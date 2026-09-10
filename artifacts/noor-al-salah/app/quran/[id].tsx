@@ -72,7 +72,7 @@ export default function QuranReader() {
         contentContainerStyle={styles.content}
         ListHeaderComponent={
           <View style={styles.header}>
-            <View style={styles.top}>
+            <View style={[styles.top, { flexDirection: isArabic ? 'row-reverse' : 'row' }]}>
               <Pressable testID="quran-reader-back" onPress={() => router.back()} style={[styles.backButton, { borderColor: colors.border, backgroundColor: colors.card }]}>
                 <Feather name={isArabic ? 'arrow-right' : 'arrow-left'} size={21} color={colors.foreground} />
               </Pressable>
@@ -113,7 +113,7 @@ export default function QuranReader() {
         }
         renderItem={({ item: verse }) => (
            <View style={[styles.verse, { borderColor: colors.border }]}>
-             <Text style={[styles.verseText, { color: colors.foreground }]}>{verse.text} <Text style={[styles.number, { color: colors.primary }]}>﴿{verse.number}﴾</Text></Text>
+              <Text style={[styles.verseText, { color: colors.foreground, writingDirection: 'rtl' }]}>{verse.text} <Text style={[styles.number, { color: colors.primary, writingDirection: 'rtl' }]}>﴿{verse.number}﴾</Text></Text>
              {!isArabic && getEnglishVerse(index, verse.number) ? <Text style={[styles.verseTranslation, { color: colors.mutedForeground }]}>{getEnglishVerse(index, verse.number)}</Text> : null}
           </View>
         )}

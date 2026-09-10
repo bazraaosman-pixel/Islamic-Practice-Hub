@@ -47,9 +47,9 @@ export function PageHeader({
   return (
     <View style={[styles.pageHeader, { flexDirection: isArabic ? 'row-reverse' : 'row' }]}>
       <View style={styles.pageHeaderCopy}>
-        {eyebrow ? <Text style={[styles.eyebrow, { color: colors.primary, textAlign: isArabic ? 'right' : 'left' }]}>{eyebrow}</Text> : null}
-        <Text style={[styles.pageTitle, { color: colors.foreground, textAlign: isArabic ? 'right' : 'left' }]}>{title}</Text>
-        {subtitle ? <Text style={[styles.pageSubtitle, { color: colors.mutedForeground, textAlign: isArabic ? 'right' : 'left' }]}>{subtitle}</Text> : null}
+        {eyebrow ? <Text style={[styles.eyebrow, { color: colors.primary, textAlign: isArabic ? 'right' : 'left', writingDirection: isArabic ? 'rtl' : 'ltr' }]}>{eyebrow}</Text> : null}
+        <Text style={[styles.pageTitle, { color: colors.foreground, textAlign: isArabic ? 'right' : 'left', writingDirection: isArabic ? 'rtl' : 'ltr' }]}>{title}</Text>
+        {subtitle ? <Text style={[styles.pageSubtitle, { color: colors.mutedForeground, textAlign: isArabic ? 'right' : 'left', writingDirection: isArabic ? 'rtl' : 'ltr' }]}>{subtitle}</Text> : null}
       </View>
       {right}
     </View>
@@ -91,7 +91,7 @@ export function SectionHeading({ title, action }: { title: string; action?: stri
   return (
     <View style={[styles.sectionHeading, { flexDirection: isArabic ? 'row-reverse' : 'row' }]}>
       <Text style={[styles.sectionTitle, { color: colors.foreground, textAlign: isArabic ? 'right' : 'left' }]}>{title}</Text>
-      {action ? <Text style={[styles.sectionAction, { color: colors.primary }]}>{action}</Text> : null}
+        {action ? <Text style={[styles.sectionAction, { color: colors.primary, textAlign: isArabic ? 'left' : 'right', writingDirection: isArabic ? 'rtl' : 'ltr' }]}>{action}</Text> : null}
     </View>
   );
 }
@@ -117,9 +117,9 @@ export function PrayerRow({ prayer, active = false, onPress }: { prayer: Prayer;
     <Pressable
       testID={`prayer-${prayer.id}`}
       onPress={onPress}
-      style={({ pressed }) => [
+        style={({ pressed }) => [
         styles.prayerRow,
-        { backgroundColor: active ? colors.softTeal : colors.card, borderColor: active ? colors.primary : colors.border },
+         { backgroundColor: active ? colors.softTeal : colors.card, borderColor: active ? colors.primary : colors.border, flexDirection: isArabic ? 'row-reverse' : 'row' },
         pressed && styles.pressed,
       ]}
     >
@@ -127,11 +127,11 @@ export function PrayerRow({ prayer, active = false, onPress }: { prayer: Prayer;
         <Feather name={iconNames[prayer.icon]} size={17} color={active ? colors.primaryForeground : iconColors[prayer.accent]} />
       </View>
       <View style={[styles.prayerNames, { alignItems: isArabic ? 'flex-end' : 'flex-start' }]}>
-        <Text style={[styles.prayerArabic, { color: colors.foreground, textAlign: isArabic ? 'right' : 'left' }]}>{isArabic ? prayer.arabic : prayer.english}</Text>
-        {isArabic ? <Text style={[styles.prayerEnglish, { color: colors.mutedForeground }]}>{prayer.english}</Text> : null}
+        <Text style={[styles.prayerArabic, { color: colors.foreground, textAlign: isArabic ? 'right' : 'left', writingDirection: isArabic ? 'rtl' : 'ltr' }]}>{isArabic ? prayer.arabic : prayer.english}</Text>
+        {isArabic ? <Text style={[styles.prayerEnglish, { color: colors.mutedForeground, writingDirection: 'ltr', textAlign: 'right' }]}>{prayer.english}</Text> : null}
       </View>
        {active ? <View style={[styles.nowPill, { backgroundColor: colors.primary }]}><Text style={[styles.nowPillText, { color: colors.primaryForeground }]}>{t('current')}</Text></View> : null}
-      <Text style={[styles.prayerTime, { color: colors.foreground }]}>{prayer.time}</Text>
+      <Text style={[styles.prayerTime, { color: colors.foreground, writingDirection: 'ltr' }]}>{prayer.time}</Text>
       <Feather name={isArabic ? 'chevron-left' : 'chevron-right'} size={17} color={colors.mutedForeground} />
     </Pressable>
   );
@@ -163,8 +163,8 @@ export function QuickAction({
       <View style={[styles.quickIcon, { backgroundColor: colors.card }]}>
         <Feather name={icon} size={18} color={foregrounds[tone]} />
       </View>
-      <Text style={[styles.quickLabel, { color: colors.foreground, textAlign: isArabic ? 'right' : 'left' }]}>{label}</Text>
-      <Text style={[styles.quickSubtitle, { color: colors.mutedForeground, textAlign: isArabic ? 'right' : 'left' }]}>{subtitle}</Text>
+      <Text style={[styles.quickLabel, { color: colors.foreground, textAlign: isArabic ? 'right' : 'left', writingDirection: isArabic ? 'rtl' : 'ltr' }]}>{label}</Text>
+      <Text style={[styles.quickSubtitle, { color: colors.mutedForeground, textAlign: isArabic ? 'right' : 'left', writingDirection: isArabic ? 'rtl' : 'ltr' }]}>{subtitle}</Text>
     </Pressable>
   );
 }
@@ -175,8 +175,8 @@ export function StatChip({ icon, value, label }: { icon: IconName; value: string
     <View style={[styles.statChip, { borderColor: colors.border, backgroundColor: colors.card }]}>
       <Feather name={icon} size={15} color={colors.primary} />
       <View>
-        <Text style={[styles.statValue, { color: colors.foreground }]}>{value}</Text>
-        <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>{label}</Text>
+        <Text style={[styles.statValue, { color: colors.foreground, writingDirection: 'ltr' }]}>{value}</Text>
+        <Text style={[styles.statLabel, { color: colors.mutedForeground, writingDirection: 'auto' }]}>{label}</Text>
       </View>
     </View>
   );
@@ -188,8 +188,8 @@ export function EmptyDataNote({ title, body, icon = 'info' }: { title: string; b
     <View style={[styles.emptyNote, { backgroundColor: colors.softGold, borderColor: colors.accent }]}>
       <MaterialCommunityIcons name={icon === 'info' ? 'information-outline' : 'book-open-outline'} size={22} color={colors.accentForeground} />
       <View style={styles.emptyNoteCopy}>
-        <Text style={[styles.emptyNoteTitle, { color: colors.accentForeground }]}>{title}</Text>
-        <Text style={[styles.emptyNoteBody, { color: colors.accentForeground }]}>{body}</Text>
+        <Text style={[styles.emptyNoteTitle, { color: colors.accentForeground, writingDirection: 'auto' }]}>{title}</Text>
+        <Text style={[styles.emptyNoteBody, { color: colors.accentForeground, writingDirection: 'auto' }]}>{body}</Text>
       </View>
     </View>
   );

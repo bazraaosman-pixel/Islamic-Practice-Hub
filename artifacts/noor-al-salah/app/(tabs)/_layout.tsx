@@ -16,10 +16,10 @@ const tabMeta = [
   { name: 'settings', key: 'settings', icon: 'settings' as const, sf: 'gearshape' },
 ] as const;
 
-function NativeTabLayout({ labels }: { labels: Record<string, string> }) {
+function NativeTabLayout({ labels, tabs }: { labels: Record<string, string>; tabs: readonly typeof tabMeta[number][] }) {
   return (
     <NativeTabs>
-      {tabMeta.map((tab) => (
+      {tabs.map((tab) => (
         <NativeTabs.Trigger key={tab.name} name={tab.name}>
           <NativeTabs.Trigger.Icon sf={{ default: tab.sf as any, selected: `${tab.sf}.fill` as any }} />
           <NativeTabs.Trigger.Label>{labels[tab.key]}</NativeTabs.Trigger.Label>
@@ -29,7 +29,7 @@ function NativeTabLayout({ labels }: { labels: Record<string, string> }) {
   );
 }
 
-function ClassicTabLayout({ labels }: { labels: Record<string, string> }) {
+function ClassicTabLayout({ labels, tabs }: { labels: Record<string, string>; tabs: readonly typeof tabMeta[number][] }) {
   const colors = useColors();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
@@ -59,7 +59,7 @@ function ClassicTabLayout({ labels }: { labels: Record<string, string> }) {
           ) : null,
       }}
     >
-      {tabMeta.map((tab) => (
+      {tabs.map((tab) => (
         <Tabs.Screen
           key={tab.name}
           name={tab.name}
@@ -74,7 +74,8 @@ function ClassicTabLayout({ labels }: { labels: Record<string, string> }) {
 }
 
 export default function TabLayout() {
-  const { t } = useI18n();
+  const { t, isArabic } = useI18n();
   const labels = { home: t('home'), prayer: t('prayer'), quran: t('quran'), adhkar: t('adhkar'), settings: t('settings') };
-  return isLiquidGlassAvailable() ? <NativeTabLayout labels={labels} /> : <ClassicTabLayout labels={labels} />;
+  const tabs = isArabic ? [...tabMeta].reverse() : tabMeta;
+  return isLiquidGlassAvailable() ? <NativeTabLayout labels={labels} tabs={tabs} /> : <ClassicTabLayout labels={labels} tabs={tabs} />;
 }

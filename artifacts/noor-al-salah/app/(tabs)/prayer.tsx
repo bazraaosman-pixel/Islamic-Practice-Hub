@@ -23,21 +23,21 @@ export default function PrayerScreen() {
   return (
     <ScreenShell>
       <PageHeader eyebrow={text('مواقيت اليوم', "Today's times")} title={t('prayer')} subtitle={`${city}  ·  ${formattedDate}`} right={<Pressable testID="prayer-settings" accessibilityLabel={text('إعدادات الصلاة', 'Prayer settings')} onPress={() => router.push('/settings')} style={[styles.settingsCircle, { backgroundColor: colors.softTeal }]}><Feather name="sliders" size={18} color={colors.primary} /></Pressable>} />
-      <View style={[styles.dayPicker, { backgroundColor: colors.muted }]}>
+       <View style={[styles.dayPicker, { backgroundColor: colors.muted, flexDirection: isArabic ? 'row-reverse' : 'row' }]}>
         {days.map((day, index) => <Pressable key={day} testID={`day-${index}`} onPress={() => setSelectedDay(index)} style={[styles.dayButton, selectedDay === index && { backgroundColor: colors.card }]}><Text style={[styles.dayText, { color: selectedDay === index ? colors.primary : colors.mutedForeground }]}>{day}</Text></Pressable>)}
       </View>
-      <View style={styles.statsRow}>
+       <View style={[styles.statsRow, { flexDirection: isArabic ? 'row-reverse' : 'row' }]}>
          <StatChip icon="sunrise" value={prayers.find((p) => p.id === 'sunrise')?.time ?? '--:--'} label={text('الشروق', 'Sunrise')} />
          <StatChip icon="sunset" value={prayers.find((p) => p.id === 'maghrib')?.time ?? '--:--'} label={text('الغروب', 'Sunset')} />
       </View>
       <View style={styles.listWrap}>
          <SectionHeading title={text('المواقيت', 'Times')} action={text('طريقة الحساب', 'Calculation method')} />
-         <View style={styles.methodLine}><View style={[styles.methodDot, { backgroundColor: colors.primary }]} /><Text style={[styles.methodText, { color: colors.mutedForeground, textAlign: isArabic ? 'right' : 'left' }]}>{methodLabel} · {text('العصر', 'Asr')}: {madhab === 'hanafi' ? text('الحنفي', 'Hanafi') : text('الشافعي', 'Shafi')}</Text><Feather name={isArabic ? 'chevron-left' : 'chevron-right'} size={15} color={colors.mutedForeground} /></View>
+          <View style={[styles.methodLine, { flexDirection: isArabic ? 'row-reverse' : 'row' }]}><View style={[styles.methodDot, { backgroundColor: colors.primary }]} /><Text style={[styles.methodText, { color: colors.mutedForeground, textAlign: isArabic ? 'right' : 'left', writingDirection: isArabic ? 'rtl' : 'ltr' }]}>{methodLabel} · {text('العصر', 'Asr')}: {madhab === 'hanafi' ? text('الحنفي', 'Hanafi') : text('الشافعي', 'Shafi')}</Text><Feather name={isArabic ? 'chevron-left' : 'chevron-right'} size={15} color={colors.mutedForeground} /></View>
          <View style={styles.prayerList}>{prayers.map((prayer) => <PrayerRow key={prayer.id} prayer={prayer} active={prayer.id === nextPrayer?.id} />)}</View>
       </View>
-      <Pressable testID="open-qibla" onPress={() => router.push('/qibla')} style={({ pressed }) => [styles.qiblaBanner, { backgroundColor: colors.hero }, pressed && { opacity: 0.8 }]}>
+       <Pressable testID="open-qibla" onPress={() => router.push('/qibla')} style={({ pressed }) => [styles.qiblaBanner, { backgroundColor: colors.hero, flexDirection: isArabic ? 'row-reverse' : 'row' }, pressed && { opacity: 0.8 }]}>
         <View style={[styles.qiblaIcon, { backgroundColor: 'rgba(255,255,255,0.12)' }]}><Feather name="compass" size={20} color={colors.gold} /></View>
-         <View style={styles.qiblaCopy}><Text style={[styles.qiblaTitle, { color: colors.cream }]}>{text('تحقق من اتجاه القبلة', 'Check the Qibla direction')}</Text><Text style={[styles.qiblaSubtitle, { color: colors.heroMuted }]}>{text('بوصلة دقيقة تساعدك أينما كنت', 'An accurate compass to guide you anywhere')}</Text></View>
+          <View style={styles.qiblaCopy}><Text style={[styles.qiblaTitle, { color: colors.cream, textAlign: isArabic ? 'right' : 'left', writingDirection: isArabic ? 'rtl' : 'ltr' }]}>{text('تحقق من اتجاه القبلة', 'Check the Qibla direction')}</Text><Text style={[styles.qiblaSubtitle, { color: colors.heroMuted, textAlign: isArabic ? 'right' : 'left', writingDirection: isArabic ? 'rtl' : 'ltr' }]}>{text('بوصلة دقيقة تساعدك أينما كنت', 'An accurate compass to guide you anywhere')}</Text></View>
          <Feather name={isArabic ? 'arrow-left' : 'arrow-right'} size={18} color={colors.cream} />
       </Pressable>
     </ScreenShell>

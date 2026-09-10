@@ -5,16 +5,18 @@ import { getPrayerTimes, type CalculationMethodKey, type LocationData } from './
 import type { Language } from '@/context/PreferencesContext';
 
 const IDS_KEY = '@noor-al-salah/prayer-notification-ids';
-export type AdhanChoice = 'makkah' | 'madinah';
-export const ADHAN_SOUNDS: Record<AdhanChoice, string> = {
+export type BuiltInAdhan = 'makkah' | 'madinah';
+export type AdhanChoice = BuiltInAdhan | 'custom';
+export type CustomAdhan = { uri: string; fileName: string };
+export const ADHAN_SOUNDS: Record<BuiltInAdhan, string> = {
   makkah: 'makkah-adhan.wav',
   madinah: 'madinah-adhan.wav',
 };
-export const ADHAN_AUDIO_ASSETS: Record<AdhanChoice, number> = {
+export const ADHAN_AUDIO_ASSETS: Record<BuiltInAdhan, number> = {
   makkah: require('../assets/audio/makkah-adhan.wav'),
   madinah: require('../assets/audio/madinah-adhan.wav'),
 };
-const CHANNEL_IDS: Record<AdhanChoice, string> = {
+const CHANNEL_IDS: Record<BuiltInAdhan, string> = {
   makkah: 'prayer-adhan-makkah-v1',
   madinah: 'prayer-adhan-madinah-v1',
 };
@@ -57,7 +59,10 @@ async function schedulePrayerNotificationsUnsafe(location: LocationData, method:
   await cancelPrayerNotificationsUnsafe();
   const permission = await Notifications.requestPermissionsAsync();
   if (!permission.granted) throw new Error('notifications-denied');
-  if (Platform.OS === 'android') await Notifications.setNotificationChannelAsync(CHANNEL_IDS[adhan], { name: language === 'ar' ? (adhan === 'makkah' ? 'أذان الحرم المكي' : 'أذان الحرم المدني') : (adhan === 'makkah' ? 'Makkah Adhan' : 'Madinah Adhan'), importance: Notifications.AndroidImportance.HIGH, sound: ADHAN_SOUNDS[adhan] });
+  // Native notifications cannot read user document files. Always use the
+  // bundled Makkah sound/channel for the custom choice.
+  const notificationAdhan: BuiltInAdhan = adhan === 'custom' ? 'makkah' : adhan;
+  if (Platform.OS === 'android') await Notifications.setNotificationChannelAsync(CHANNEL_IDS[notificationAdhan], { name: language === 'ar' ? (notificationAdhan === 'makkah' ? 'أذان الحرم المكي' : 'أذان الحرم المدني') : (notificationAdhan === 'makkah' ? 'Makkah Adhan' : 'Madinah Adhan'), importance: Notifications.AndroidImportance.HIGH, sound: ADHAN_SOUNDS[notificationAdhan] });
   const now = new Date();
   const ids: string[] = [];
   for (let offset = 0; offset < 7; offset += 1) {
@@ -67,8 +72,8 @@ async function schedulePrayerNotificationsUnsafe(location: LocationData, method:
     for (const prayer of prayers) {
       try {
         const id = await Notifications.scheduleNotificationAsync({
-          content: { title: language === 'ar' ? `حان وقت صلاة ${prayer.arabic}` : `Prayer time: ${prayer.english}`, body: language === 'ar' ? `${prayer.english} · ${prayer.time}` : `${prayer.english} prayer · ${prayer.time}`, sound: ADHAN_SOUNDS[adhan], data: { kind: 'prayer', prayer: prayer.id } },
-          trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: new Date(prayer.timestamp!), ...(Platform.OS === 'android' ? { channelId: CHANNEL_IDS[adhan] } : {}) },
+          content: { title: language === 'ar' ? `حان وقت صلاة ${prayer.arabic}` : `Prayer time: ${prayer.english}`, body: language === 'ar' ? `${prayer.english} · ${prayer.time}` : `${prayer.english} prayer · ${prayer.time}`, sound: ADHAN_SOUNDS[notificationAdhan], data: { kind: 'prayer', prayer: prayer.id } },
+          trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: new Date(prayer.timestamp!), ...(Platform.OS === 'android' ? { channelId: CHANNEL_IDS[notificationAdhan] } : {}) },
         });
         ids.push(id);
       } catch (error) {

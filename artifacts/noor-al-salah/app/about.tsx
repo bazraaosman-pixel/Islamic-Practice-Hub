@@ -19,13 +19,13 @@ function AboutInfoRow({
   const { isArabic } = useI18n();
 
   return (
-    <View style={[styles.infoRow, { borderBottomColor: colors.border }]}>
+      <View style={[styles.infoRow, { borderBottomColor: colors.border, flexDirection: isArabic ? 'row-reverse' : 'row' }]}>
       <View style={[styles.infoIcon, { backgroundColor: colors.softTeal }]}>
         <Feather name={icon} size={17} color={colors.primary} />
       </View>
       <View style={[styles.infoCopy, { alignItems: isArabic ? 'flex-end' : 'flex-start' }]}>
-        <Text style={[styles.infoLabel, { color: colors.mutedForeground, textAlign: isArabic ? 'right' : 'left' }]}>{label}</Text>
-        <Text style={[styles.infoValue, { color: colors.foreground, textAlign: isArabic ? 'right' : 'left' }]}>{value}</Text>
+        <Text style={[styles.infoLabel, { color: colors.mutedForeground, textAlign: isArabic ? 'right' : 'left', writingDirection: isArabic ? 'rtl' : 'ltr' }]}>{label}</Text>
+        <Text style={[styles.infoValue, { color: colors.foreground, textAlign: isArabic ? 'right' : 'left', writingDirection: isArabic ? 'rtl' : 'ltr' }]}>{value}</Text>
       </View>
     </View>
   );
@@ -67,7 +67,7 @@ export default function AboutScreen() {
           numberOfLines={1}
           adjustsFontSizeToFit
           minimumFontScale={0.85}
-          style={[styles.brandArabic, { color: colors.cream }]}
+           style={[styles.brandArabic, { color: colors.cream, writingDirection: 'rtl' }]}
         >
           نور الصلاة
         </Text>
@@ -82,18 +82,18 @@ export default function AboutScreen() {
         <View style={[styles.infoCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <AboutInfoRow icon="code" label={t('development')} value={t('developer')} />
           <AboutInfoRow icon="shield" label={text('الإصدار', 'Version')} value={`${t('appName')} · 1.0.0`} />
-          <View style={styles.infoFooter}>
+           <View style={[styles.infoFooter, { flexDirection: isArabic ? 'row-reverse' : 'row' }]}>
             <Feather name="heart" size={15} color={colors.gold} />
             <Text style={[styles.infoFooterText, { color: colors.mutedForeground }]}>{text('صُمّم بعناية ليكون قريباً من يومك', 'Designed with care to fit naturally into your day')}</Text>
           </View>
         </View>
       </View>
 
-      <View style={[styles.noteCard, { backgroundColor: colors.softGold, borderColor: colors.accent }]}>
+       <View style={[styles.noteCard, { backgroundColor: colors.softGold, borderColor: colors.accent, flexDirection: isArabic ? 'row-reverse' : 'row' }]}>
         <View style={[styles.noteIcon, { backgroundColor: colors.card }]}>
           <Feather name="star" size={17} color={colors.accentForeground} />
         </View>
-        <Text style={[styles.noteText, { color: colors.accentForeground, textAlign: isArabic ? 'right' : 'left' }]}>
+        <Text style={[styles.noteText, { color: colors.accentForeground, textAlign: isArabic ? 'right' : 'left', writingDirection: isArabic ? 'rtl' : 'ltr' }]}>
           {text('نسأل الله أن يجعل نور الصلاة عوناً لك على المحافظة على صلاتك وذكرك.', 'May Noor Al-Salah help you keep your prayer and remembrance.')}
         </Text>
       </View>
