@@ -30,7 +30,7 @@ export default function SettingsScreen() {
          <SettingRow icon="clock" title="طريقة الحساب" subtitle={calculationMethod === 'muslimWorldLeague' ? 'رابطة العالم الإسلامي' : calculationMethod} onPress={() => setCalculationMethod(calculationMethod === 'muslimWorldLeague' ? 'egyptian' : 'muslimWorldLeague')} />
          <SettingRow icon="sun" title="المذهب للعصر" subtitle={madhab === 'shafi' ? 'الشافعي' : 'الحنفي'} onPress={() => setMadhab(madhab === 'shafi' ? 'hanafi' : 'shafi')} />
         <SettingRow icon="compass" title="معايرة القبلة" subtitle="مساعدة واتجاه الجهاز" />
-        <SettingRow icon="volume-2" title="صوت تنبيه الأذان" subtitle="صوت النظام الافتراضي عند حلول وقت الصلاة" />
+        <SettingRow icon="volume-2" title="صوت تنبيه الأذان" subtitle="أذان تقليدي مضمّن · يعمل في النسخة المثبّتة" />
       </View>
       <Pressable testID="about-app" onPress={() => router.push('/about')} style={({ pressed }) => [styles.aboutRow, { borderColor: colors.border, backgroundColor: colors.card }, pressed && { opacity: 0.72 }]}><Feather name="info" size={17} color={colors.primary} /><Text style={[styles.aboutText, { color: colors.foreground }]}>عن نور الصلاة</Text><Text style={[styles.version, { color: colors.mutedForeground }]}>v1.0.0</Text><Feather name="chevron-left" size={17} color={colors.mutedForeground} /></Pressable>
     </ScreenShell>

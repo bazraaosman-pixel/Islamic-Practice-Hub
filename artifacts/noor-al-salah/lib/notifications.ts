@@ -36,7 +36,7 @@ export async function schedulePrayerNotifications(location: LocationData, method
   await cancelPrayerNotifications();
   const permission = await Notifications.requestPermissionsAsync();
   if (!permission.granted) throw new Error('notifications-denied');
-  if (Platform.OS === 'android') await Notifications.setNotificationChannelAsync('prayer', { name: 'تنبيهات الصلاة', importance: Notifications.AndroidImportance.HIGH, sound: 'default' });
+  if (Platform.OS === 'android') await Notifications.setNotificationChannelAsync('prayer-adhan-v1', { name: 'تنبيهات الصلاة بالأذان', importance: Notifications.AndroidImportance.HIGH, sound: 'traditional-adhan.wav' });
   const now = new Date();
   const ids: string[] = [];
   for (let offset = 0; offset < 7; offset += 1) {
@@ -45,8 +45,8 @@ export async function schedulePrayerNotifications(location: LocationData, method
     const prayers = getPrayerTimes(location, date, method, madhab).filter((prayer) => prayer.id !== 'sunrise' && (prayer.timestamp ?? 0) > now.getTime());
     for (const prayer of prayers) {
       const id = await Notifications.scheduleNotificationAsync({
-        content: { title: `حان وقت صلاة ${prayer.arabic}`, body: `${prayer.english} · ${prayer.time}`, sound: 'default', data: { kind: 'prayer', prayer: prayer.id } },
-        trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: new Date(prayer.timestamp!), ...(Platform.OS === 'android' ? { channelId: 'prayer' } : {}) },
+        content: { title: `حان وقت صلاة ${prayer.arabic}`, body: `${prayer.english} · ${prayer.time}`, sound: 'traditional-adhan.wav', data: { kind: 'prayer', prayer: prayer.id } },
+        trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: new Date(prayer.timestamp!), ...(Platform.OS === 'android' ? { channelId: 'prayer-adhan-v1' } : {}) },
       });
       ids.push(id);
     }

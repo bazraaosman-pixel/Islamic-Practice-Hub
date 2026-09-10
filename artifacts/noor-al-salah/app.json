@@ -33,7 +33,7 @@
       "expo-audio",
       [
         "expo-notifications",
-        { "sounds": [] }
+        { "sounds": ["./assets/audio/traditional-adhan.wav"] }
       ]
     ],
     "experiments": {
