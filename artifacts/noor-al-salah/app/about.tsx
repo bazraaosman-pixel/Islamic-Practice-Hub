@@ -63,10 +63,17 @@ export default function AboutScreen() {
         <View style={[styles.brandMark, { backgroundColor: colors.gold }]}>
           <Feather name="moon" size={25} color={colors.hero} />
         </View>
-        <Text style={[styles.brandArabic, { color: colors.cream }]}>نور الصلاة</Text>
+        <Text
+          numberOfLines={1}
+          adjustsFontSizeToFit
+          minimumFontScale={0.85}
+          style={[styles.brandArabic, { color: colors.cream }]}
+        >
+          نور الصلاة
+        </Text>
         <Text style={[styles.brandEnglish, { color: colors.heroMuted }]}>Noor Al-Salah</Text>
         <Text style={[styles.brandDescription, { color: colors.heroMuted }]}>
-          {text('رفيقك الهادئ للصلاة والذكر، بتجربة عربية بسيطة وقريبة من القلب.', 'Your calm companion for prayer and remembrance, with a simple experience close to the heart.')}
+          {text('رفيقك الهادئ للصلاة والذكر، بتجربة سودانية بسيطة وقريبة من القلب.', 'Your calm companion for prayer and remembrance, with a simple experience close to the heart.')}
         </Text>
       </View>
 
