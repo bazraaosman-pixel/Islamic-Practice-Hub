@@ -70,7 +70,7 @@ export default function AboutScreen() {
       <View style={styles.sectionBlock}>
         <SectionHeading title="حقوق التطبيق" />
         <View style={[styles.infoCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <AboutInfoRow icon="code" label="التطوير والتصميم" value="المهندس والمطور/ بازرعه عثمان محمد علي" />
+          <AboutInfoRow icon="code" label="التطوير والتصميم" value="م / بازرعه عثمان محمد علي" />
           <AboutInfoRow icon="shield" label="الإصدار" value="نور الصلاة · 1.0.0" />
           <View style={styles.infoFooter}>
             <Feather name="heart" size={15} color={colors.gold} />
