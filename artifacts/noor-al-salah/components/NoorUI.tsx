@@ -17,17 +17,16 @@ export function ScreenShell({
   style?: StyleProp<ViewStyle>;
 }) {
   const colors = useColors();
-  const { isArabic } = useI18n();
   return scroll ? (
     <ScrollView
-      style={[styles.shell, { backgroundColor: colors.background, direction: isArabic ? 'rtl' : 'ltr' }, style]}
+      style={[styles.shell, { backgroundColor: colors.background }, style]}
       contentContainerStyle={styles.scrollContent}
       showsVerticalScrollIndicator={false}
     >
       {children}
     </ScrollView>
   ) : (
-    <View style={[styles.shell, { backgroundColor: colors.background, direction: isArabic ? 'rtl' : 'ltr' }, style]}>{children}</View>
+    <View style={[styles.shell, { backgroundColor: colors.background }, style]}>{children}</View>
   );
 }
 
@@ -171,12 +170,13 @@ export function QuickAction({
 
 export function StatChip({ icon, value, label }: { icon: IconName; value: string; label: string }) {
   const colors = useColors();
+  const { isArabic } = useI18n();
   return (
-    <View style={[styles.statChip, { borderColor: colors.border, backgroundColor: colors.card }]}>
+    <View style={[styles.statChip, { borderColor: colors.border, backgroundColor: colors.card, flexDirection: isArabic ? 'row-reverse' : 'row' }]}>
       <Feather name={icon} size={15} color={colors.primary} />
       <View>
         <Text style={[styles.statValue, { color: colors.foreground, writingDirection: 'ltr' }]}>{value}</Text>
-        <Text style={[styles.statLabel, { color: colors.mutedForeground, writingDirection: 'auto' }]}>{label}</Text>
+        <Text style={[styles.statLabel, { color: colors.mutedForeground, writingDirection: isArabic ? 'rtl' : 'ltr', textAlign: isArabic ? 'right' : 'left' }]}>{label}</Text>
       </View>
     </View>
   );
@@ -184,12 +184,13 @@ export function StatChip({ icon, value, label }: { icon: IconName; value: string
 
 export function EmptyDataNote({ title, body, icon = 'info' }: { title: string; body: string; icon?: IconName | 'book-open-outline' }) {
   const colors = useColors();
+  const { isArabic } = useI18n();
   return (
-    <View style={[styles.emptyNote, { backgroundColor: colors.softGold, borderColor: colors.accent }]}>
+    <View style={[styles.emptyNote, { backgroundColor: colors.softGold, borderColor: colors.accent, flexDirection: isArabic ? 'row-reverse' : 'row' }]}>
       <MaterialCommunityIcons name={icon === 'info' ? 'information-outline' : 'book-open-outline'} size={22} color={colors.accentForeground} />
       <View style={styles.emptyNoteCopy}>
-        <Text style={[styles.emptyNoteTitle, { color: colors.accentForeground, writingDirection: 'auto' }]}>{title}</Text>
-        <Text style={[styles.emptyNoteBody, { color: colors.accentForeground, writingDirection: 'auto' }]}>{body}</Text>
+        <Text style={[styles.emptyNoteTitle, { color: colors.accentForeground, writingDirection: isArabic ? 'rtl' : 'ltr', textAlign: isArabic ? 'right' : 'left' }]}>{title}</Text>
+        <Text style={[styles.emptyNoteBody, { color: colors.accentForeground, writingDirection: isArabic ? 'rtl' : 'ltr', textAlign: isArabic ? 'right' : 'left' }]}>{body}</Text>
       </View>
     </View>
   );

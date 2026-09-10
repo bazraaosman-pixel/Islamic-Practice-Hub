@@ -1,3 +1,4 @@
 - [Quran text integrity](quran-text-integrity.md) — Preserve Tanzil-derived Arabic unchanged; retain basmala rules and the Quran-capable font.
 - [Expo Go notifications](expo-go-notifications.md) — Never load expo-notifications in Expo Go; keep it behind the execution-environment guard.
 - [Adhan sound choices](adhan-sound-choices.md) — Keep preview and notification assets aligned; Android needs a stable channel per sound choice.
+- [Dynamic RTL layout](dynamic-rtl-layout.md) — Use explicit direction-aware rows; inherited RTL plus row-reverse causes double reversal on web.

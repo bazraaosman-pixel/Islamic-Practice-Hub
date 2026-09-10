@@ -141,7 +141,7 @@ export default function AdhkarDetailScreen() {
         </View>
        </LinearGradient>
 
-      <View style={styles.sectionHeader}>
+       <View style={[styles.sectionHeader, { flexDirection: isArabic ? 'row-reverse' : 'row' }]}>
          <Text style={[styles.sectionTitle, { color: colors.foreground, textAlign: isArabic ? 'right' : 'left' }]}>{localizedCopy.title}</Text>
          <Text style={[styles.sectionCount, { color: colors.primary }]}>{isArabic ? `${entries.length} أذكار` : `${entries.length} supplications`}</Text>
       </View>
@@ -180,7 +180,7 @@ export default function AdhkarDetailScreen() {
           );
         })}
       </View>
-      <Pressable testID="reset-adhkar" onPress={() => { countsRef.current = {}; setCounts({}); writeQueue.current = writeQueue.current.then(() => AsyncStorage.setItem(storageKey, JSON.stringify({ day: dayKey, counts: {} }))).catch(() => undefined); }} style={[styles.resetButton, { borderColor: colors.border }]}>
+       <Pressable testID="reset-adhkar" onPress={() => { countsRef.current = {}; setCounts({}); writeQueue.current = writeQueue.current.then(() => AsyncStorage.setItem(storageKey, JSON.stringify({ day: dayKey, counts: {} }))).catch(() => undefined); }} style={[styles.resetButton, { borderColor: colors.border, flexDirection: isArabic ? 'row-reverse' : 'row' }]}>
          <Feather name="refresh-cw" size={14} color={colors.primary} /><Text style={[styles.resetText, { color: colors.primary }]}>{text('تصفير ورد اليوم', 'Reset today’s wird')}</Text>
       </Pressable>
        <Text style={[styles.attribution, { color: colors.mutedForeground, textAlign: isArabic ? 'right' : 'left' }]}>{isArabic ? adhkarAttribution : adhkarEnglishAttribution}</Text>

@@ -82,7 +82,7 @@ export default function QuranReader() {
               </View>
             </View>
             <View style={[styles.audioCard, { backgroundColor: colors.hero }]}>
-              <View style={styles.audioTitleRow}>
+              <View style={[styles.audioTitleRow, { flexDirection: isArabic ? 'row-reverse' : 'row' }]}>
                  <View style={[styles.audioCopy, { alignItems: isArabic ? 'flex-end' : 'flex-start' }]}>
                    <Text style={[styles.audioTitle, { color: colors.cream, textAlign: isArabic ? 'right' : 'left' }]}>{text('استمع للسورة', 'Listen to the surah')}</Text>
                    <Text style={[styles.audioSubtitle, { color: colors.heroMuted, textAlign: isArabic ? 'right' : 'left' }]}>{isArabic ? `${qari.name} · ${qari.riwaya}` : `${qari.id === 'alzain' ? 'Sheikh Al-Zain Muhammad Ahmad' : qari.id === 'noreen' ? 'Sheikh Noreen Muhammad Siddiq' : 'Sheikh Al-Fatih Muhammad Al-Zubair'} · ${qari.riwaya === 'حفص عن عاصم' ? 'Hafs from Asim' : 'Al-Duri from Abu Amr'}`}</Text>
@@ -98,7 +98,7 @@ export default function QuranReader() {
                 <Text style={[styles.timeText, { color: colors.heroMuted }]}>{formatTime(status.duration)}</Text>
                  <Text style={[styles.timeText, { color: colors.heroMuted }]}>{status.isBuffering ? text('جارٍ التحميل…', 'Loading…') : formatTime(status.currentTime)}</Text>
               </View>
-              <View style={styles.qariList}>
+              <View style={[styles.qariList, { flexDirection: isArabic ? 'row-reverse' : 'row' }]}>
                 {sudaneseQaris.map((item) => (
                   <Pressable key={item.id} testID={`qari-${item.id}`} onPress={() => selectQari(item.id)} style={[styles.qariButton, { borderColor: qariId === item.id ? colors.gold : colors.heroMuted }, qariId === item.id && { backgroundColor: colors.softTeal }]}>
                      <Text numberOfLines={1} style={[styles.qariText, { color: qariId === item.id ? colors.cream : colors.heroMuted }]}>{isArabic ? item.name.replace('الشيخ ', '') : item.id === 'alzain' ? 'Al-Zain' : item.id === 'noreen' ? 'Noreen' : 'Al-Fatih'}</Text>

@@ -84,7 +84,7 @@ export default function AboutScreen() {
           <AboutInfoRow icon="shield" label={text('الإصدار', 'Version')} value={`${t('appName')} · 1.0.0`} />
            <View style={[styles.infoFooter, { flexDirection: isArabic ? 'row-reverse' : 'row' }]}>
             <Feather name="heart" size={15} color={colors.gold} />
-            <Text style={[styles.infoFooterText, { color: colors.mutedForeground }]}>{text('صُمّم بعناية ليكون قريباً من يومك', 'Designed with care to fit naturally into your day')}</Text>
+        <Text style={[styles.infoFooterText, { color: colors.mutedForeground, writingDirection: isArabic ? 'rtl' : 'ltr' }]}>{text('صُمّم بعناية ليكون قريباً من يومك', 'Designed with care to fit naturally into your day')}</Text>
           </View>
         </View>
       </View>
