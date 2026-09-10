@@ -1,1 +1,2 @@
 - [Quran text integrity](quran-text-integrity.md) — Preserve Tanzil-derived Arabic unchanged; retain basmala rules and the Quran-capable font.
+- [Expo Go notifications](expo-go-notifications.md) — Never load expo-notifications in Expo Go; keep it behind the execution-environment guard.

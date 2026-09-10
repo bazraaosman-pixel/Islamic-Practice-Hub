@@ -1,18 +1,38 @@
 import { Platform } from 'react-native';
-import * as Notifications from 'expo-notifications';
+import Constants, { ExecutionEnvironment } from 'expo-constants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getPrayerTimes, type CalculationMethodKey, type LocationData } from './prayerData';
 
 const IDS_KEY = '@noor-al-salah/prayer-notification-ids';
 
-if (Platform.OS !== 'web') {
+export const prayerNotificationsSupported =
+  Platform.OS !== 'web' &&
+  Constants.executionEnvironment !== ExecutionEnvironment.StoreClient;
+
+type NotificationsModule = typeof import('expo-notifications');
+let notificationsModulePromise: Promise<NotificationsModule | null> | null = null;
+
+async function getNotificationsModule(): Promise<NotificationsModule | null> {
+  if (!prayerNotificationsSupported) return null;
+  if (!notificationsModulePromise) {
+    notificationsModulePromise = import('expo-notifications').catch(() => null);
+  }
+  return notificationsModulePromise;
+}
+
+async function configureNotificationHandler() {
+  const Notifications = await getNotificationsModule();
+  if (!Notifications) return;
   Notifications.setNotificationHandler({
     handleNotification: async () => ({ shouldShowBanner: true, shouldShowList: true, shouldPlaySound: true, shouldSetBadge: false }),
   });
 }
 
-export async function schedulePrayerNotifications(location: LocationData, method: CalculationMethodKey, madhab: 'shafi' | 'hanafi') {
-  if (Platform.OS === 'web') return;
+void configureNotificationHandler();
+
+export async function schedulePrayerNotifications(location: LocationData, method: CalculationMethodKey, madhab: 'shafi' | 'hanafi'): Promise<boolean> {
+  const Notifications = await getNotificationsModule();
+  if (!Notifications) return false;
   await cancelPrayerNotifications();
   const permission = await Notifications.requestPermissionsAsync();
   if (!permission.granted) throw new Error('notifications-denied');
@@ -32,11 +52,15 @@ export async function schedulePrayerNotifications(location: LocationData, method
     }
   }
   await AsyncStorage.setItem(IDS_KEY, JSON.stringify(ids));
+  return true;
 }
+
 export async function cancelPrayerNotifications() {
-  if (Platform.OS === 'web') return;
   const stored = await AsyncStorage.getItem(IDS_KEY);
   const ids = stored ? JSON.parse(stored) as string[] : [];
-  await Promise.all(ids.map((id) => Notifications.cancelScheduledNotificationAsync(id).catch(() => undefined)));
+  const Notifications = await getNotificationsModule();
+  if (Notifications) {
+    await Promise.all(ids.map((id) => Notifications.cancelScheduledNotificationAsync(id).catch(() => undefined)));
+  }
   await AsyncStorage.removeItem(IDS_KEY);
 }

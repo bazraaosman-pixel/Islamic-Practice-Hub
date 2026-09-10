@@ -14,7 +14,7 @@ function SettingRow({ icon, title, subtitle, children, onPress }: { icon: React.
 export default function SettingsScreen() {
   const colors = useColors();
   const router = useRouter();
-  const { theme, language, city, prayerNotifications, setTheme, setLanguage, setPrayerNotifications, refreshLocation, locationError, calculationMethod, setCalculationMethod, madhab, setMadhab } = usePreferences();
+  const { theme, language, city, prayerNotifications, prayerNotificationsSupported, setTheme, setLanguage, setPrayerNotifications, refreshLocation, locationError, calculationMethod, setCalculationMethod, madhab, setMadhab } = usePreferences();
   const themeOptions: { key: ThemePreference; label: string }[] = [{ key: 'light', label: 'فاتح' }, { key: 'dark', label: 'داكن' }, { key: 'system', label: 'النظام' }];
   return (
     <ScreenShell>
@@ -24,7 +24,7 @@ export default function SettingsScreen() {
         <SettingRow icon="globe" title="اللغة" subtitle={language === 'ar' ? 'العربية' : 'English'}><View style={styles.languagePill}><Pressable testID="language-ar" onPress={() => setLanguage('ar')} style={[styles.languageOption, language === 'ar' && { backgroundColor: colors.primary }]}><Text style={[styles.languageText, { color: language === 'ar' ? colors.primaryForeground : colors.mutedForeground }]}>عربي</Text></Pressable><Pressable testID="language-en" onPress={() => setLanguage('en')} style={[styles.languageOption, language === 'en' && { backgroundColor: colors.primary }]}><Text style={[styles.languageText, { color: language === 'en' ? colors.primaryForeground : colors.mutedForeground }]}>EN</Text></Pressable></View></SettingRow>
         <SettingRow icon="moon" title="المظهر" subtitle={theme === 'system' ? 'حسب إعدادات الجهاز' : theme === 'dark' ? 'داكن' : 'فاتح'}><View style={styles.themePill}>{themeOptions.map((option) => <Pressable key={option.key} testID={`theme-${option.key}`} onPress={() => setTheme(option.key)} style={[styles.themeOption, theme === option.key && { backgroundColor: colors.primary }]}><Text style={[styles.themeText, { color: theme === option.key ? colors.primaryForeground : colors.mutedForeground }]}>{option.label}</Text></Pressable>)}</View></SettingRow>
          <SettingRow icon="map-pin" title="الموقع" subtitle={locationError ? 'السماح بالموقع مطلوب' : city} onPress={refreshLocation}><Feather name="refresh-cw" size={17} color={colors.mutedForeground} /></SettingRow>
-        <SettingRow icon="bell" title="تنبيهات الصلاة" subtitle={prayerNotifications ? 'مفعّلة' : 'غير مفعّلة'}><Switch testID="prayer-notifications" value={prayerNotifications} onValueChange={setPrayerNotifications} trackColor={{ false: colors.muted, true: colors.primary }} thumbColor={colors.cream} /></SettingRow>
+        <SettingRow icon="bell" title="تنبيهات الصلاة" subtitle={!prayerNotificationsSupported ? 'غير متاحة داخل Expo Go' : prayerNotifications ? 'مفعّلة' : 'غير مفعّلة'}><Switch testID="prayer-notifications" disabled={!prayerNotificationsSupported} value={prayerNotifications} onValueChange={setPrayerNotifications} trackColor={{ false: colors.muted, true: colors.primary }} thumbColor={colors.cream} /></SettingRow>
       </View>
       <View style={[styles.settingGroup, { backgroundColor: colors.card, borderColor: colors.border }]}>
          <SettingRow icon="clock" title="طريقة الحساب" subtitle={calculationMethod === 'muslimWorldLeague' ? 'رابطة العالم الإسلامي' : calculationMethod} onPress={() => setCalculationMethod(calculationMethod === 'muslimWorldLeague' ? 'egyptian' : 'muslimWorldLeague')} />

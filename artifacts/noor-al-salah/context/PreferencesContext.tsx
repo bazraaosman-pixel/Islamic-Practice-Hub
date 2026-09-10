@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { DEFAULT_LOCATION, getCachedLocation, requestCurrentLocation } from '@/lib/location';
 import type { CalculationMethodKey, LocationData } from '@/lib/prayerData';
-import { cancelPrayerNotifications, schedulePrayerNotifications } from '@/lib/notifications';
+import { cancelPrayerNotifications, prayerNotificationsSupported, schedulePrayerNotifications } from '@/lib/notifications';
 
 export type ThemePreference = 'light' | 'dark' | 'system';
 export type Language = 'ar' | 'en';
@@ -12,6 +12,7 @@ type PreferencesContextValue = {
   language: Language;
   city: string;
   prayerNotifications: boolean;
+  prayerNotificationsSupported: boolean;
   setTheme: (theme: ThemePreference) => void;
   setLanguage: (language: Language) => void;
   setCity: (city: string) => void;
@@ -30,6 +31,7 @@ const PreferencesContext = createContext<PreferencesContextValue>({
   language: 'ar',
   city: 'Nairobi, Kenya',
   prayerNotifications: false,
+  prayerNotificationsSupported,
   setTheme: () => undefined,
   setLanguage: () => undefined,
   setCity: () => undefined,
@@ -70,7 +72,7 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
           if (parsed.language) setLanguageState(parsed.language);
           if (parsed.city) setCityState(parsed.city);
           if (typeof parsed.prayerNotifications === 'boolean') {
-            setPrayerNotificationsState(parsed.prayerNotifications);
+            setPrayerNotificationsState(parsed.prayerNotifications && prayerNotificationsSupported);
           }
           if (parsed.calculationMethod) setCalculationMethodState(parsed.calculationMethod);
           if (parsed.madhab) setMadhabState(parsed.madhab);
@@ -112,6 +114,7 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
       language,
       city,
       prayerNotifications,
+      prayerNotificationsSupported,
       setTheme: (next) => {
         setThemeState(next);
         persist({ theme: next });
@@ -131,8 +134,13 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
           cancelPrayerNotifications().catch(() => undefined);
           return;
         }
+        if (!prayerNotificationsSupported) {
+          setPrayerNotificationsState(false);
+          persist({ prayerNotifications: false });
+          return;
+        }
         schedulePrayerNotifications(location, calculationMethod, madhab)
-          .then(() => { setPrayerNotificationsState(true); persist({ prayerNotifications: true }); })
+          .then((scheduled) => { setPrayerNotificationsState(scheduled); persist({ prayerNotifications: scheduled }); })
           .catch(() => { setPrayerNotificationsState(false); persist({ prayerNotifications: false }); });
       },
       location,
