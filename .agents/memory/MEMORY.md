@@ -1,0 +1,1 @@
+- [Quran text integrity](quran-text-integrity.md) — Preserve Tanzil-derived Arabic unchanged; retain basmala rules and the Quran-capable font.

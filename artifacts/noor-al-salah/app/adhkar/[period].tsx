@@ -2,14 +2,19 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { ScreenShell } from '@/components/NoorUI';
 import { useColors } from '@/hooks/useColors';
-import { AdhkarPeriod, adhkarSets, DhikrEntry } from '@/lib/prayerData';
+import { AdhkarPeriod, adhkarSets, DhikrEntry, adhkarAttribution } from '@/lib/adhkarData';
 
 type Counts = Record<string, number>;
+
+function localDayKey() {
+  const date = new Date();
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+}
 
 const periodCopy: Record<AdhkarPeriod, { eyebrow: string; title: string; subtitle: string; icon: 'sunrise' | 'moon' }> = {
   morning: {
@@ -24,27 +29,41 @@ const periodCopy: Record<AdhkarPeriod, { eyebrow: string; title: string; subtitl
     subtitle: 'اختم يومك بالسكينة والطمأنينة',
     icon: 'moon',
   },
+  prayer: { eyebrow: 'بعد الفريضة', title: 'أذكار بعد الصلاة', subtitle: 'اذكر الله عقب كل فريضة', icon: 'moon' },
+  sleep: { eyebrow: 'قبل النوم', title: 'أذكار النوم', subtitle: 'اختم يومك بذكر الله', icon: 'moon' },
 };
-
-function nextPeriod(period: AdhkarPeriod): AdhkarPeriod {
-  return period === 'morning' ? 'evening' : 'morning';
-}
 
 export default function AdhkarDetailScreen() {
   const colors = useColors();
   const params = useLocalSearchParams<{ period?: string }>();
-  const period: AdhkarPeriod = params.period === 'evening' ? 'evening' : 'morning';
+  const period: AdhkarPeriod = params.period === 'evening' || params.period === 'prayer' || params.period === 'sleep' ? params.period : 'morning';
   const copy = periodCopy[period];
   const entries = adhkarSets[period];
   const storageKey = `@noor-al-salah/adhkar/${period}`;
   const [counts, setCounts] = useState<Counts>({});
+  const [dayKey, setDayKey] = useState('');
+  const [hydrated, setHydrated] = useState(false);
+  const countsRef = useRef<Counts>({});
+  const writeQueue = useRef(Promise.resolve());
 
   useEffect(() => {
+    const today = localDayKey();
+    setHydrated(false);
+    countsRef.current = {};
+    setCounts({});
+    setDayKey(today);
     AsyncStorage.getItem(storageKey)
       .then((stored) => {
-        if (stored) setCounts(JSON.parse(stored) as Counts);
+        if (!stored) return;
+        const parsed = JSON.parse(stored) as { day?: string; counts?: Counts };
+        if (parsed.day === today) {
+          countsRef.current = parsed.counts ?? {};
+          setCounts(countsRef.current);
+        }
+        else AsyncStorage.setItem(storageKey, JSON.stringify({ day: today, counts: {} })).catch(() => undefined);
       })
-      .catch(() => undefined);
+      .catch(() => undefined)
+      .finally(() => setHydrated(true));
   }, [storageKey]);
 
   const totalDone = useMemo(
@@ -55,11 +74,13 @@ export default function AdhkarDetailScreen() {
   const progress = totalRepeats === 0 ? 0 : Math.round((totalDone / totalRepeats) * 100);
 
   const increment = (entry: DhikrEntry) => {
-    const current = counts[entry.id] ?? 0;
+    if (!hydrated) return;
+    const current = countsRef.current[entry.id] ?? 0;
     if (current >= entry.repeat) return;
-    const nextCounts = { ...counts, [entry.id]: current + 1 };
+    const nextCounts = { ...countsRef.current, [entry.id]: current + 1 };
+    countsRef.current = nextCounts;
     setCounts(nextCounts);
-    AsyncStorage.setItem(storageKey, JSON.stringify(nextCounts)).catch(() => undefined);
+    writeQueue.current = writeQueue.current.then(() => AsyncStorage.setItem(storageKey, JSON.stringify({ day: dayKey, counts: nextCounts }))).catch(() => undefined);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => undefined);
   };
 
@@ -83,7 +104,7 @@ export default function AdhkarDetailScreen() {
       </View>
 
       <View style={[styles.switcher, { backgroundColor: colors.muted }]}>
-        {(['morning', 'evening'] as AdhkarPeriod[]).map((item) => (
+        {(['morning', 'evening', 'prayer', 'sleep'] as AdhkarPeriod[]).map((item) => (
           <Pressable
             key={item}
             testID={`switch-${item}`}
@@ -91,7 +112,7 @@ export default function AdhkarDetailScreen() {
             style={[styles.switchButton, period === item && { backgroundColor: colors.card }]}
           >
             <Feather name={item === 'morning' ? 'sunrise' : 'moon'} size={15} color={period === item ? colors.primary : colors.mutedForeground} />
-            <Text style={[styles.switchText, { color: period === item ? colors.primary : colors.mutedForeground }]}>{item === 'morning' ? 'الصباح' : 'المساء'}</Text>
+            <Text style={[styles.switchText, { color: period === item ? colors.primary : colors.mutedForeground }]}>{item === 'morning' ? 'الصباح' : item === 'evening' ? 'المساء' : item === 'prayer' ? 'بعد الصلاة' : 'النوم'}</Text>
           </Pressable>
         ))}
       </View>
@@ -109,7 +130,7 @@ export default function AdhkarDetailScreen() {
       </LinearGradient>
 
       <View style={styles.sectionHeader}>
-        <Text style={[styles.sectionTitle, { color: colors.foreground }]}>ورد {period === 'morning' ? 'الصباح' : 'المساء'}</Text>
+        <Text style={[styles.sectionTitle, { color: colors.foreground }]}>{copy.title}</Text>
         <Text style={[styles.sectionCount, { color: colors.primary }]}>{entries.length} أذكار</Text>
       </View>
 
@@ -134,6 +155,7 @@ export default function AdhkarDetailScreen() {
               <View style={styles.entryCopy}>
                 <Text style={[styles.entryArabic, { color: colors.foreground }]}>{entry.arabic}</Text>
                 <Text style={[styles.entryTranslation, { color: colors.mutedForeground }]}>{entry.translation}</Text>
+                <Text style={[styles.sourceText, { color: colors.mutedForeground }]}>{entry.source}</Text>
                 <View style={styles.entryMeta}>
                   <Text style={[styles.tapHint, { color: colors.primary }]}>{isComplete ? 'تم بحمد الله' : 'اضغط للتكرار'}</Text>
                   <Text style={[styles.repeatText, { color: colors.mutedForeground }]}>{done} / {entry.repeat}</Text>
@@ -146,6 +168,10 @@ export default function AdhkarDetailScreen() {
           );
         })}
       </View>
+      <Pressable testID="reset-adhkar" onPress={() => { countsRef.current = {}; setCounts({}); writeQueue.current = writeQueue.current.then(() => AsyncStorage.setItem(storageKey, JSON.stringify({ day: dayKey, counts: {} }))).catch(() => undefined); }} style={[styles.resetButton, { borderColor: colors.border }]}>
+        <Feather name="refresh-cw" size={14} color={colors.primary} /><Text style={[styles.resetText, { color: colors.primary }]}>تصفير ورد اليوم</Text>
+      </Pressable>
+      <Text style={[styles.attribution, { color: colors.mutedForeground }]}>{adhkarAttribution}</Text>
 
       <View style={[styles.footerNote, { backgroundColor: colors.softGold }]}>
         <Feather name="heart" size={15} color={colors.accentForeground} />
@@ -181,8 +207,9 @@ const styles = StyleSheet.create({
   entryNumber: { width: 31, height: 31, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
   entryNumberText: { fontSize: 12, fontWeight: '700' },
   entryCopy: { flex: 1, alignItems: 'flex-end', gap: 7 },
-  entryArabic: { fontSize: 17, lineHeight: 29, fontWeight: '600', textAlign: 'right' },
+  entryArabic: { fontFamily: 'AmiriQuran_400Regular', fontSize: 20, lineHeight: 34, textAlign: 'right' },
   entryTranslation: { fontSize: 11, textAlign: 'right' },
+  sourceText: { fontSize: 10, textAlign: 'right' },
   entryMeta: { width: '100%', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   tapHint: { fontSize: 10, fontWeight: '700' },
   repeatText: { fontSize: 11, fontWeight: '600' },
@@ -190,4 +217,7 @@ const styles = StyleSheet.create({
   repeatDotText: { fontSize: 11, fontWeight: '700' },
   footerNote: { borderRadius: 16, padding: 12, flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
   footerText: { flex: 1, fontSize: 11, lineHeight: 17, textAlign: 'right' },
+  resetButton: { borderWidth: 1, borderRadius: 14, padding: 11, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 7 },
+  resetText: { fontSize: 11, fontWeight: '700' },
+  attribution: { fontSize: 9, lineHeight: 14, textAlign: 'right' },
 });

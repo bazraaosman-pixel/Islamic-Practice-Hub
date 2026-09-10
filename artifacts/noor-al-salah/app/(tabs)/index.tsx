@@ -6,7 +6,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PageHeader, PrayerRow, QuickAction, ScreenShell, SectionHeading } from '@/components/NoorUI';
 import { useColors } from '@/hooks/useColors';
-import { getCountdown, getNextPrayer, prayers } from '@/lib/prayerData';
+import { getCountdown, getNextPrayer, getPrayerTimes } from '@/lib/prayerData';
 import { usePreferences } from '@/context/PreferencesContext';
 
 function getDateCopy() {
@@ -19,9 +19,11 @@ function getDateCopy() {
 export default function HomeScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const { city } = usePreferences();
+  const { city, location, calculationMethod, madhab, refreshLocation } = usePreferences();
   const [now, setNow] = useState(new Date());
-  const nextPrayer = useMemo(() => getNextPrayer(now), [now]);
+  const prayers = useMemo(() => getPrayerTimes(location, now, calculationMethod, madhab), [location, calculationMethod, madhab, now.toDateString()]);
+  const tomorrowPrayers = useMemo(() => { const date = new Date(now); date.setDate(date.getDate() + 1); return getPrayerTimes(location, date, calculationMethod, madhab); }, [location, calculationMethod, madhab, now.toDateString()]);
+  const nextPrayer = useMemo(() => getNextPrayer(now, prayers, tomorrowPrayers), [now, prayers, tomorrowPrayers]);
   const dates = useMemo(getDateCopy, [now.getDate()]);
 
   useEffect(() => {
@@ -35,7 +37,7 @@ export default function HomeScreen() {
         eyebrow="السلام عليكم"
         title="نور الصلاة"
         subtitle={`${dates.gregorian}  ·  ${dates.hijri}`}
-        right={<Pressable testID="location-selector" style={styles.locationButton} onPress={() => undefined}><Feather name="map-pin" size={14} color={colors.primary} /><Text style={[styles.locationText, { color: colors.primary }]}>{city}</Text></Pressable>}
+        right={<Pressable testID="location-selector" style={styles.locationButton} onPress={refreshLocation}><Feather name="map-pin" size={14} color={colors.primary} /><Text style={[styles.locationText, { color: colors.primary }]}>{city}</Text></Pressable>}
       />
 
       <LinearGradient colors={[colors.hero, colors.primary]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.heroCard}>
@@ -49,7 +51,7 @@ export default function HomeScreen() {
           <View style={styles.moonMark}><Feather name="moon" size={21} color={colors.gold} /></View>
         </View>
         <View style={styles.heroBottom}>
-          <Text style={[styles.heroCountdown, { color: colors.cream }]}>{getCountdown(nextPrayer.time, now)}</Text>
+          <Text style={[styles.heroCountdown, { color: colors.cream }]}>{getCountdown(nextPrayer, now)}</Text>
           <View style={styles.heroCaptionRow}><View style={[styles.liveDot, { backgroundColor: colors.gold }]} /><Text style={[styles.heroCaption, { color: colors.heroMuted }]}>متبقي على الأذان</Text></View>
         </View>
       </LinearGradient>

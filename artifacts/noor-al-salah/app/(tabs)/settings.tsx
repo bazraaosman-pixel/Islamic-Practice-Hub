@@ -14,7 +14,7 @@ function SettingRow({ icon, title, subtitle, children, onPress }: { icon: React.
 export default function SettingsScreen() {
   const colors = useColors();
   const router = useRouter();
-  const { theme, language, city, prayerNotifications, setTheme, setLanguage, setPrayerNotifications } = usePreferences();
+  const { theme, language, city, prayerNotifications, setTheme, setLanguage, setPrayerNotifications, refreshLocation, locationError, calculationMethod, setCalculationMethod, madhab, setMadhab } = usePreferences();
   const themeOptions: { key: ThemePreference; label: string }[] = [{ key: 'light', label: 'فاتح' }, { key: 'dark', label: 'داكن' }, { key: 'system', label: 'النظام' }];
   return (
     <ScreenShell>
@@ -23,13 +23,14 @@ export default function SettingsScreen() {
       <View style={[styles.settingGroup, { backgroundColor: colors.card, borderColor: colors.border }]}>
         <SettingRow icon="globe" title="اللغة" subtitle={language === 'ar' ? 'العربية' : 'English'}><View style={styles.languagePill}><Pressable testID="language-ar" onPress={() => setLanguage('ar')} style={[styles.languageOption, language === 'ar' && { backgroundColor: colors.primary }]}><Text style={[styles.languageText, { color: language === 'ar' ? colors.primaryForeground : colors.mutedForeground }]}>عربي</Text></Pressable><Pressable testID="language-en" onPress={() => setLanguage('en')} style={[styles.languageOption, language === 'en' && { backgroundColor: colors.primary }]}><Text style={[styles.languageText, { color: language === 'en' ? colors.primaryForeground : colors.mutedForeground }]}>EN</Text></Pressable></View></SettingRow>
         <SettingRow icon="moon" title="المظهر" subtitle={theme === 'system' ? 'حسب إعدادات الجهاز' : theme === 'dark' ? 'داكن' : 'فاتح'}><View style={styles.themePill}>{themeOptions.map((option) => <Pressable key={option.key} testID={`theme-${option.key}`} onPress={() => setTheme(option.key)} style={[styles.themeOption, theme === option.key && { backgroundColor: colors.primary }]}><Text style={[styles.themeText, { color: theme === option.key ? colors.primaryForeground : colors.mutedForeground }]}>{option.label}</Text></Pressable>)}</View></SettingRow>
-        <SettingRow icon="map-pin" title="الموقع" subtitle={city}><Feather name="chevron-left" size={17} color={colors.mutedForeground} /></SettingRow>
+         <SettingRow icon="map-pin" title="الموقع" subtitle={locationError ? 'السماح بالموقع مطلوب' : city} onPress={refreshLocation}><Feather name="refresh-cw" size={17} color={colors.mutedForeground} /></SettingRow>
         <SettingRow icon="bell" title="تنبيهات الصلاة" subtitle={prayerNotifications ? 'مفعّلة' : 'غير مفعّلة'}><Switch testID="prayer-notifications" value={prayerNotifications} onValueChange={setPrayerNotifications} trackColor={{ false: colors.muted, true: colors.primary }} thumbColor={colors.cream} /></SettingRow>
       </View>
       <View style={[styles.settingGroup, { backgroundColor: colors.card, borderColor: colors.border }]}>
-        <SettingRow icon="clock" title="طريقة الحساب" subtitle="رابطة العالم الإسلامي" />
+         <SettingRow icon="clock" title="طريقة الحساب" subtitle={calculationMethod === 'muslimWorldLeague' ? 'رابطة العالم الإسلامي' : calculationMethod} onPress={() => setCalculationMethod(calculationMethod === 'muslimWorldLeague' ? 'egyptian' : 'muslimWorldLeague')} />
+         <SettingRow icon="sun" title="المذهب للعصر" subtitle={madhab === 'shafi' ? 'الشافعي' : 'الحنفي'} onPress={() => setMadhab(madhab === 'shafi' ? 'hanafi' : 'shafi')} />
         <SettingRow icon="compass" title="معايرة القبلة" subtitle="مساعدة واتجاه الجهاز" />
-        <SettingRow icon="volume-2" title="صوت الأذان" subtitle="سيتم ضبطه مع التنبيهات" />
+        <SettingRow icon="volume-2" title="صوت تنبيه الأذان" subtitle="صوت النظام الافتراضي عند حلول وقت الصلاة" />
       </View>
       <Pressable testID="about-app" onPress={() => router.push('/about')} style={({ pressed }) => [styles.aboutRow, { borderColor: colors.border, backgroundColor: colors.card }, pressed && { opacity: 0.72 }]}><Feather name="info" size={17} color={colors.primary} /><Text style={[styles.aboutText, { color: colors.foreground }]}>عن نور الصلاة</Text><Text style={[styles.version, { color: colors.mutedForeground }]}>v1.0.0</Text><Feather name="chevron-left" size={17} color={colors.mutedForeground} /></Pressable>
     </ScreenShell>

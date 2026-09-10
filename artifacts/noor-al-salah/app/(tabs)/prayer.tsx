@@ -4,15 +4,19 @@ import React, { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { PageHeader, PrayerRow, ScreenShell, SectionHeading, StatChip } from '@/components/NoorUI';
 import { useColors } from '@/hooks/useColors';
-import { prayers } from '@/lib/prayerData';
+import { getNextPrayer, getPrayerTimes } from '@/lib/prayerData';
 import { usePreferences } from '@/context/PreferencesContext';
 
 export default function PrayerScreen() {
   const colors = useColors();
-  const { city } = usePreferences();
+  const { city, location, calculationMethod, madhab } = usePreferences();
   const [selectedDay, setSelectedDay] = useState(0);
-  const days = ['اليوم', 'غداً', 'الخميس'];
-  const formattedDate = useMemo(() => new Intl.DateTimeFormat('ar-EG', { day: 'numeric', month: 'long' }).format(new Date()), []);
+  const selectedDate = useMemo(() => { const date = new Date(); date.setDate(date.getDate() + selectedDay); return date; }, [selectedDay]);
+  const prayers = useMemo(() => getPrayerTimes(location, selectedDate, calculationMethod, madhab), [location, calculationMethod, madhab, selectedDate]);
+  const days = useMemo(() => [0, 1, 2].map((offset) => offset === 0 ? 'اليوم' : offset === 1 ? 'غداً' : new Intl.DateTimeFormat('ar-EG', { weekday: 'long' }).format(new Date(Date.now() + offset * 86400000))), []);
+  const formattedDate = useMemo(() => new Intl.DateTimeFormat('ar-EG', { day: 'numeric', month: 'long' }).format(selectedDate), [selectedDate]);
+  const nextPrayer = selectedDay === 0 ? getNextPrayer(new Date(), prayers) : null;
+  const methodLabel = calculationMethod === 'muslimWorldLeague' ? 'رابطة العالم الإسلامي' : calculationMethod === 'egyptian' ? 'الهيئة المصرية' : calculationMethod;
 
   return (
     <ScreenShell>
@@ -21,13 +25,13 @@ export default function PrayerScreen() {
         {days.map((day, index) => <Pressable key={day} testID={`day-${index}`} onPress={() => setSelectedDay(index)} style={[styles.dayButton, selectedDay === index && { backgroundColor: colors.card }]}><Text style={[styles.dayText, { color: selectedDay === index ? colors.primary : colors.mutedForeground }]}>{day}</Text></Pressable>)}
       </View>
       <View style={styles.statsRow}>
-        <StatChip icon="sunrise" value="06:29" label="الشروق" />
-        <StatChip icon="sunset" value="18:24" label="الغروب" />
+         <StatChip icon="sunrise" value={prayers.find((p) => p.id === 'sunrise')?.time ?? '--:--'} label="الشروق" />
+         <StatChip icon="sunset" value={prayers.find((p) => p.id === 'maghrib')?.time ?? '--:--'} label="الغروب" />
       </View>
       <View style={styles.listWrap}>
         <SectionHeading title="المواقيت" action="طريقة الحساب" />
-        <View style={styles.methodLine}><View style={[styles.methodDot, { backgroundColor: colors.primary }]} /><Text style={[styles.methodText, { color: colors.mutedForeground }]}>رابطة العالم الإسلامي · العصر: الشافعي</Text><Feather name="chevron-left" size={15} color={colors.mutedForeground} /></View>
-        <View style={styles.prayerList}>{prayers.map((prayer) => <PrayerRow key={prayer.id} prayer={prayer} active={prayer.id === 'maghrib'} />)}</View>
+        <View style={styles.methodLine}><View style={[styles.methodDot, { backgroundColor: colors.primary }]} /><Text style={[styles.methodText, { color: colors.mutedForeground }]}>{methodLabel} · العصر: {madhab === 'hanafi' ? 'الحنفي' : 'الشافعي'}</Text><Feather name="chevron-left" size={15} color={colors.mutedForeground} /></View>
+         <View style={styles.prayerList}>{prayers.map((prayer) => <PrayerRow key={prayer.id} prayer={prayer} active={prayer.id === nextPrayer?.id} />)}</View>
       </View>
       <Pressable testID="open-qibla" onPress={() => router.push('/qibla')} style={({ pressed }) => [styles.qiblaBanner, { backgroundColor: colors.hero }, pressed && { opacity: 0.8 }]}>
         <View style={[styles.qiblaIcon, { backgroundColor: 'rgba(255,255,255,0.12)' }]}><Feather name="compass" size={20} color={colors.gold} /></View>

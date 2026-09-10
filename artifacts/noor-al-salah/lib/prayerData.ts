@@ -1,3 +1,5 @@
+import { CalculationMethod, Coordinates, Madhab, PrayerTimes } from 'adhan';
+
 export type Prayer = {
   id: string;
   arabic: string;
@@ -5,7 +7,38 @@ export type Prayer = {
   time: string;
   icon: 'sunrise' | 'sun' | 'cloud-sun' | 'sunset' | 'moon';
   accent: 'gold' | 'teal' | 'blue' | 'orange' | 'violet';
+  timestamp?: number;
 };
+
+export type CalculationMethodKey = 'muslimWorldLeague' | 'egyptian' | 'karachi' | 'ummAlQura' | 'northAmerica' | 'singapore';
+export type LocationData = { latitude: number; longitude: number; city?: string };
+
+const methods: Record<CalculationMethodKey, () => ReturnType<typeof CalculationMethod.MuslimWorldLeague>> = {
+  muslimWorldLeague: CalculationMethod.MuslimWorldLeague,
+  egyptian: CalculationMethod.Egyptian,
+  karachi: CalculationMethod.Karachi,
+  ummAlQura: CalculationMethod.UmmAlQura,
+  northAmerica: CalculationMethod.NorthAmerica,
+  singapore: CalculationMethod.Singapore,
+};
+
+export function getPrayerTimes(location: LocationData, date = new Date(), method: CalculationMethodKey = 'muslimWorldLeague', madhab: 'shafi' | 'hanafi' = 'shafi'): Prayer[] {
+  const params = methods[method]?.() ?? CalculationMethod.MuslimWorldLeague();
+  params.madhab = madhab === 'hanafi' ? Madhab.Hanafi : Madhab.Shafi;
+  const times = new PrayerTimes(new Coordinates(location.latitude, location.longitude), date, params);
+  const entries: Array<[string, string, Date, Prayer['icon'], Prayer['accent']]> = [
+    ['fajr', 'الفجر', times.fajr, 'moon', 'violet'],
+    ['sunrise', 'الشروق', times.sunrise, 'sunrise', 'gold'],
+    ['dhuhr', 'الظهر', times.dhuhr, 'sun', 'gold'],
+    ['asr', 'العصر', times.asr, 'cloud-sun', 'blue'],
+    ['maghrib', 'المغرب', times.maghrib, 'sunset', 'orange'],
+    ['isha', 'العشاء', times.isha, 'moon', 'violet'],
+  ];
+  return entries.map(([id, arabic, value, icon, accent]) => ({
+    id, arabic, english: ({ fajr: 'Fajr', sunrise: 'Sunrise', dhuhr: 'Dhuhr', asr: 'Asr', maghrib: 'Maghrib', isha: 'Isha' } as Record<string, string>)[id],
+    time: `${String(value.getHours()).padStart(2, '0')}:${String(value.getMinutes()).padStart(2, '0')}`, icon, accent, timestamp: value.getTime(),
+  }));
+}
 
 export const prayers: Prayer[] = [
   { id: 'fajr', arabic: 'الفجر', english: 'Fajr', time: '05:16', icon: 'moon', accent: 'violet' },
@@ -102,17 +135,21 @@ export function getTimeInMinutes(time: string) {
   return hours * 60 + minutes;
 }
 
-export function getNextPrayer(now = new Date()) {
-  const current = now.getHours() * 60 + now.getMinutes();
-  return prayers.find((prayer) => getTimeInMinutes(prayer.time) > current) ?? prayers[0];
+export function getNextPrayer(now = new Date(), prayerList: Prayer[] = prayers, tomorrowList: Prayer[] = []) {
+  const current = now.getTime();
+  const todayNext = prayerList.find((prayer) => prayer.id !== 'sunrise' && (prayer.timestamp ?? 0) > current);
+  return todayNext ?? tomorrowList.find((prayer) => prayer.id === 'fajr') ?? prayerList.find((prayer) => prayer.id === 'fajr') ?? prayerList[0];
 }
 
-export function getCountdown(time: string, now = new Date()) {
-  const target = getTimeInMinutes(time);
-  const current = now.getHours() * 60 + now.getMinutes();
-  let difference = target - current;
-  if (difference <= 0) difference += 24 * 60;
-  const hours = Math.floor(difference / 60);
-  const minutes = difference % 60;
-  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:00`;
+export function getCountdown(prayer: Prayer, now = new Date()) {
+  const fallback = new Date(now);
+  const [hours, minutes] = prayer.time.split(':').map(Number);
+  fallback.setHours(hours, minutes, 0, 0);
+  if (fallback <= now) fallback.setDate(fallback.getDate() + 1);
+  const difference = Math.max(0, (prayer.timestamp ?? fallback.getTime()) - now.getTime());
+  const totalSeconds = Math.floor(difference / 1000);
+  const remainingHours = Math.floor(totalSeconds / 3600);
+  const remainingMinutes = Math.floor((totalSeconds % 3600) / 60);
+  const remainingSeconds = totalSeconds % 60;
+  return `${String(remainingHours).padStart(2, '0')}:${String(remainingMinutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`;
 }

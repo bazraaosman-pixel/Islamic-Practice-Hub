@@ -11,6 +11,7 @@ import {
   Inter_700Bold,
   useFonts,
 } from '@expo-google-fonts/inter';
+import { AmiriQuran_400Regular } from '@expo-google-fonts/amiri-quran';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { PreferencesProvider } from '@/context/PreferencesContext';
@@ -28,6 +29,7 @@ function RootLayoutNav() {
       <Stack.Screen name="tasbih" options={{ headerShown: false }} />
       <Stack.Screen name="adhkar-detail" options={{ headerShown: false }} />
       <Stack.Screen name="about" options={{ headerShown: false }} />
+      <Stack.Screen name="quran/[id]" options={{ headerShown: false }} />
     </Stack>
   );
 }
@@ -38,6 +40,7 @@ export default function RootLayout() {
     Inter_500Medium,
     Inter_600SemiBold,
     Inter_700Bold,
+    AmiriQuran_400Regular,
   });
 
   useEffect(() => {

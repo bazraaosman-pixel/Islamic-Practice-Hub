@@ -1,24 +1,54 @@
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
-import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Magnetometer } from 'expo-sensors';
 import { ScreenShell } from '@/components/NoorUI';
 import { useColors } from '@/hooks/useColors';
+import { usePreferences } from '@/context/PreferencesContext';
+
+function bearingToKaaba(lat: number, lon: number) {
+  const φ1 = lat * Math.PI / 180; const φ2 = 21.4225 * Math.PI / 180; const Δλ = (39.8262 - lon) * Math.PI / 180;
+  return (Math.atan2(Math.sin(Δλ), Math.cos(φ1) * Math.tan(φ2) - Math.sin(φ1) * Math.cos(Δλ)) * 180 / Math.PI + 360) % 360;
+}
 
 export default function QiblaScreen() {
   const colors = useColors();
+  const { location } = usePreferences();
+  const [heading, setHeading] = useState(0);
+  const [sensorAvailable, setSensorAvailable] = useState<boolean | null>(Platform.OS === 'web' ? false : null);
+  const bearing = bearingToKaaba(location.latitude, location.longitude);
+  useEffect(() => {
+    let subscription: { remove: () => void } | undefined;
+    Magnetometer.isAvailableAsync().then((available) => {
+      setSensorAvailable(available);
+      if (!available) return;
+      Magnetometer.setUpdateInterval(250);
+      subscription = Magnetometer.addListener(({ x, y }) => {
+        const angle = Math.atan2(y, x) * 180 / Math.PI;
+        const next = (angle >= 0 ? 90 - angle : -angle - 90 + 360) % 360;
+        setHeading((previous) => {
+          const delta = ((next - previous + 540) % 360) - 180;
+          return (previous + delta * 0.22 + 360) % 360;
+        });
+      });
+    }).catch(() => setSensorAvailable(false));
+    return () => subscription?.remove();
+  }, []);
+  const direction = Math.round(bearing);
+  const rotation = `${Math.round(bearing - heading)}deg`;
   return (
     <ScreenShell>
       <View style={styles.topBar}><Pressable testID="qibla-back" onPress={() => router.back()} style={[styles.backButton, { backgroundColor: colors.card, borderColor: colors.border }]}><Feather name="arrow-right" size={19} color={colors.foreground} /></Pressable><View style={styles.titleCopy}><Text style={[styles.eyebrow, { color: colors.primary }]}>وجهتك أينما كنت</Text><Text style={[styles.title, { color: colors.foreground }]}>اتجاه القبلة</Text></View><View style={{ width: 42 }} /></View>
       <LinearGradient colors={[colors.hero, colors.primary]} start={{ x: 0.2, y: 0 }} end={{ x: 0.9, y: 1 }} style={styles.compassCard}>
         <View style={styles.compassGlow} />
         <Text style={[styles.compassEyebrow, { color: colors.heroMuted }]}>اتجاه مكة المكرمة</Text>
-        <View style={styles.compass}><View style={[styles.ring, { borderColor: 'rgba(248,244,233,0.24)' }]} /><View style={[styles.ringSmall, { borderColor: 'rgba(248,244,233,0.18)' }]} /><Text style={[styles.north, { color: colors.gold }]}>N</Text><View style={[styles.needle, { backgroundColor: colors.gold }]} /><View style={[styles.needleTail, { backgroundColor: colors.cream }]} /><View style={[styles.centerDot, { backgroundColor: colors.cream, borderColor: colors.gold }]} /><Feather name="navigation" size={18} color={colors.cream} style={styles.navigationMark} /></View>
-        <Text style={[styles.degree, { color: colors.cream }]}>136°</Text><Text style={[styles.degreeLabel, { color: colors.heroMuted }]}>جنوب شرق · من موقعك الحالي</Text>
+         <View style={styles.compass}><View style={[styles.ring, { borderColor: 'rgba(248,244,233,0.24)' }]} /><View style={[styles.ringSmall, { borderColor: 'rgba(248,244,233,0.18)' }]} /><Text style={[styles.north, { color: colors.gold }]}>N</Text><View style={[styles.needleGroup, { transform: [{ rotate: rotation }] }]}><Feather name="navigation" size={19} color={colors.gold} style={styles.navigationMark} /><View style={[styles.needle, { backgroundColor: colors.gold }]} /><View style={[styles.needleTail, { backgroundColor: colors.cream }]} /></View><View style={[styles.centerDot, { backgroundColor: colors.cream, borderColor: colors.gold }]} /></View>
+         <Text style={[styles.degree, { color: colors.cream }]}>{direction}°</Text><Text style={[styles.degreeLabel, { color: colors.heroMuted }]}>اتجاه القبلة · من موقعك الحالي</Text>
       </LinearGradient>
-      <View style={[styles.instructionCard, { backgroundColor: colors.card, borderColor: colors.border }]}><View style={[styles.instructionIcon, { backgroundColor: colors.softGold }]}><Feather name="rotate-ccw" size={19} color={colors.accentForeground} /></View><View style={styles.instructionCopy}><Text style={[styles.instructionTitle, { color: colors.foreground }]}>للحصول على دقة أفضل</Text><Text style={[styles.instructionBody, { color: colors.mutedForeground }]}>حرّك هاتفك على شكل رقم ٨ لمعايرة البوصلة، وابتعد عن الأجهزة المعدنية.</Text></View></View>
-      <View style={styles.footerNote}><Feather name="info" size={15} color={colors.mutedForeground} /><Text style={[styles.footerText, { color: colors.mutedForeground }]}>تحتاج البوصلة إلى الوصول لمستشعر الحركة في جهازك. سيتم تفعيل القراءة الحية في المرحلة التالية.</Text></View>
+       <View style={[styles.instructionCard, { backgroundColor: colors.card, borderColor: colors.border }]}><View style={[styles.instructionIcon, { backgroundColor: colors.softGold }]}><Feather name={sensorAvailable === false ? 'info' : 'rotate-ccw'} size={19} color={colors.accentForeground} /></View><View style={styles.instructionCopy}><Text style={[styles.instructionTitle, { color: colors.foreground }]}>{sensorAvailable === false ? 'الوضع اليدوي' : sensorAvailable === null ? 'جارٍ تشغيل البوصلة' : 'للحصول على دقة أفضل'}</Text><Text style={[styles.instructionBody, { color: colors.mutedForeground }]}>{sensorAvailable === false ? `البوصلة غير متاحة على هذا الجهاز. وجّه الهاتف يدوياً إلى ${direction}° من الشمال.` : 'ضع الهاتف بشكل مستوٍ، وحرّكه على شكل رقم ٨ للمعايرة، وابتعد عن الأجهزة المعدنية.'}</Text></View></View>
+       <View style={styles.footerNote}><Feather name="info" size={15} color={colors.mutedForeground} /><Text style={[styles.footerText, { color: colors.mutedForeground }]}>حرّك الهاتف على شكل رقم ٨ للمعايرة، وابتعد عن المعادن. إن لم يدعم جهازك البوصلة، استخدم الاتجاه {direction}° يدوياً.</Text></View>
     </ScreenShell>
   );
 }
@@ -36,10 +66,11 @@ const styles = StyleSheet.create({
   ring: { position: 'absolute', width: 226, height: 226, borderRadius: 113, borderWidth: 1 },
   ringSmall: { position: 'absolute', width: 170, height: 170, borderRadius: 85, borderWidth: 1 },
   north: { position: 'absolute', top: 20, fontSize: 13, fontWeight: '700' },
-  needle: { position: 'absolute', width: 3, height: 104, top: 39, borderRadius: 3, transform: [{ rotate: '43deg' }] },
-  needleTail: { position: 'absolute', width: 3, height: 84, bottom: 49, borderRadius: 3, transform: [{ rotate: '43deg' }] },
+  needleGroup: { position: 'absolute', width: 24, height: 218, alignItems: 'center', justifyContent: 'space-between' },
+  needle: { position: 'absolute', width: 3, height: 97, top: 12, borderRadius: 3 },
+  needleTail: { position: 'absolute', width: 3, height: 92, bottom: 17, borderRadius: 3 },
   centerDot: { width: 19, height: 19, borderRadius: 10, borderWidth: 3, zIndex: 2 },
-  navigationMark: { position: 'absolute', bottom: 30, right: 42, transform: [{ rotate: '43deg' }] },
+  navigationMark: { position: 'absolute', top: -5 },
   degree: { fontSize: 30, fontWeight: '700', marginTop: -8 },
   degreeLabel: { fontSize: 11, marginTop: 3 },
   instructionCard: { borderRadius: 21, borderWidth: 1, padding: 15, flexDirection: 'row', alignItems: 'flex-start', gap: 12 },

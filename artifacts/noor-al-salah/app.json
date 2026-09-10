@@ -8,9 +8,13 @@
     "scheme": "noor-al-salah",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "supportsTablet": false
+      "supportsTablet": false,
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "يستخدم نور الصلاة موقعك لحساب مواقيت الصلاة واتجاه القبلة."
+      }
     },
     "android": {
+      "permissions": ["ACCESS_COARSE_LOCATION", "ACCESS_FINE_LOCATION", "POST_NOTIFICATIONS"],
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/icon.png",
         "backgroundColor": "#113f38"
@@ -24,7 +28,14 @@
     "web": {
       "favicon": "./assets/images/icon.png"
     },
-    "plugins": ["expo-router"],
+    "plugins": [
+      "expo-router",
+      "expo-audio",
+      [
+        "expo-notifications",
+        { "sounds": [] }
+      ]
+    ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
