@@ -1,8 +1,9 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { DEFAULT_LOCATION, getCachedLocation, requestCurrentLocation } from '@/lib/location';
 import type { CalculationMethodKey, LocationData } from '@/lib/prayerData';
 import { cancelPrayerNotifications, prayerNotificationsSupported, schedulePrayerNotifications } from '@/lib/notifications';
+import type { AdhanChoice } from '@/lib/notifications';
 
 export type ThemePreference = 'light' | 'dark' | 'system';
 export type Language = 'ar' | 'en';
@@ -12,11 +13,15 @@ type PreferencesContextValue = {
   language: Language;
   city: string;
   prayerNotifications: boolean;
+  prayerNotificationsPending: boolean;
+  prayerNotificationsError: string | null;
+  adhan: AdhanChoice;
   prayerNotificationsSupported: boolean;
   setTheme: (theme: ThemePreference) => void;
   setLanguage: (language: Language) => void;
   setCity: (city: string) => void;
   setPrayerNotifications: (enabled: boolean) => void;
+  setAdhan: (adhan: AdhanChoice) => void;
   location: LocationData;
   locationError: string | null;
   refreshLocation: () => Promise<void>;
@@ -31,11 +36,15 @@ const PreferencesContext = createContext<PreferencesContextValue>({
   language: 'ar',
   city: 'Nairobi, Kenya',
   prayerNotifications: false,
+  prayerNotificationsPending: false,
+  prayerNotificationsError: null,
+  adhan: 'makkah',
   prayerNotificationsSupported,
   setTheme: () => undefined,
   setLanguage: () => undefined,
   setCity: () => undefined,
   setPrayerNotifications: () => undefined,
+  setAdhan: () => undefined,
   location: DEFAULT_LOCATION,
   locationError: null,
   refreshLocation: async () => undefined,
@@ -52,11 +61,39 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
   const [language, setLanguageState] = useState<Language>('ar');
   const [city, setCityState] = useState('Nairobi, Kenya');
   const [prayerNotifications, setPrayerNotificationsState] = useState(false);
+  const [prayerNotificationsPending, setPrayerNotificationsPending] = useState(false);
+  const [prayerNotificationsError, setPrayerNotificationsError] = useState<string | null>(null);
+  const [adhan, setAdhanState] = useState<AdhanChoice>('makkah');
   const [location, setLocation] = useState<LocationData>(DEFAULT_LOCATION);
   const [locationError, setLocationError] = useState<string | null>(null);
   const [calculationMethod, setCalculationMethodState] = useState<CalculationMethodKey>('muslimWorldLeague');
   const [madhab, setMadhabState] = useState<'shafi' | 'hanafi'>('shafi');
   const [hydrated, setHydrated] = useState(false);
+  // Every schedule attempt owns a generation. Older promise callbacks are
+  // deliberately ignored so they cannot undo the state of a newer attempt.
+  const scheduleGeneration = useRef(0);
+
+  const runSchedule = () => {
+    const generation = ++scheduleGeneration.current;
+    setPrayerNotificationsPending(true);
+    setPrayerNotificationsError(null);
+    schedulePrayerNotifications(location, calculationMethod, madhab, adhan, language)
+      .then((scheduled) => {
+        if (generation !== scheduleGeneration.current) return;
+        if (!scheduled) throw new Error('notifications-unavailable');
+        setPrayerNotificationsState(true);
+        persist({ prayerNotifications: true });
+      })
+      .catch((error) => {
+        if (generation !== scheduleGeneration.current) return;
+        setPrayerNotificationsState(false);
+        persist({ prayerNotifications: false });
+        setPrayerNotificationsError(error instanceof Error ? error.message : 'notifications-schedule-failed');
+      })
+      .finally(() => {
+        if (generation === scheduleGeneration.current) setPrayerNotificationsPending(false);
+      });
+  };
 
   useEffect(() => {
     Promise.all([AsyncStorage.getItem(STORAGE_KEY), getCachedLocation()])
@@ -66,7 +103,7 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
             theme: ThemePreference;
             language: Language;
             city: string;
-            prayerNotifications: boolean; calculationMethod: CalculationMethodKey; madhab: 'shafi' | 'hanafi';
+             prayerNotifications: boolean; adhan: AdhanChoice; calculationMethod: CalculationMethodKey; madhab: 'shafi' | 'hanafi';
           }>;
           if (parsed.theme) setThemeState(parsed.theme);
           if (parsed.language) setLanguageState(parsed.language);
@@ -74,6 +111,7 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
           if (typeof parsed.prayerNotifications === 'boolean') {
             setPrayerNotificationsState(parsed.prayerNotifications && prayerNotificationsSupported);
           }
+          if (parsed.adhan === 'makkah' || parsed.adhan === 'madinah') setAdhanState(parsed.adhan);
           if (parsed.calculationMethod) setCalculationMethodState(parsed.calculationMethod);
           if (parsed.madhab) setMadhabState(parsed.madhab);
         }
@@ -96,14 +134,14 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
 
   useEffect(() => {
     if (!hydrated || !prayerNotifications) return;
-    schedulePrayerNotifications(location, calculationMethod, madhab).catch(() => undefined);
-  }, [hydrated, prayerNotifications, location, calculationMethod, madhab]);
+    runSchedule();
+  }, [hydrated, location, calculationMethod, madhab, adhan, language]);
 
   const persist = (next: Partial<{
     theme: ThemePreference;
     language: Language;
     city: string; calculationMethod: CalculationMethodKey; madhab: 'shafi' | 'hanafi';
-    prayerNotifications: boolean;
+    prayerNotifications: boolean; adhan: AdhanChoice;
   }>) => {
     AsyncStorage.mergeItem(STORAGE_KEY, JSON.stringify(next)).catch(() => undefined);
   };
@@ -114,6 +152,8 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
       language,
       city,
       prayerNotifications,
+      prayerNotificationsPending,
+      prayerNotificationsError,
       prayerNotificationsSupported,
       setTheme: (next) => {
         setThemeState(next);
@@ -130,19 +170,28 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
       setPrayerNotifications: (next) => {
         if (!next) {
           setPrayerNotificationsState(false);
+          scheduleGeneration.current += 1;
+          setPrayerNotificationsPending(false);
+          setPrayerNotificationsError(null);
           persist({ prayerNotifications: false });
-          cancelPrayerNotifications().catch(() => undefined);
+          const cancelGeneration = scheduleGeneration.current;
+          cancelPrayerNotifications().catch((error) => {
+            if (cancelGeneration === scheduleGeneration.current) {
+              setPrayerNotificationsError(error instanceof Error ? error.message : 'notifications-cancel-failed');
+            }
+          });
           return;
         }
         if (!prayerNotificationsSupported) {
           setPrayerNotificationsState(false);
+          setPrayerNotificationsError('notifications-unavailable');
           persist({ prayerNotifications: false });
           return;
         }
-        schedulePrayerNotifications(location, calculationMethod, madhab)
-          .then((scheduled) => { setPrayerNotificationsState(scheduled); persist({ prayerNotifications: scheduled }); })
-          .catch(() => { setPrayerNotificationsState(false); persist({ prayerNotifications: false }); });
+        runSchedule();
       },
+      adhan,
+      setAdhan: (next) => { setAdhanState(next); persist({ adhan: next }); },
       location,
       locationError,
       refreshLocation: async () => {
@@ -158,7 +207,7 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
       setCalculationMethod: (next) => { setCalculationMethodState(next); persist({ calculationMethod: next }); },
       setMadhab: (next) => { setMadhabState(next); persist({ madhab: next }); },
     }),
-    [theme, language, city, prayerNotifications, location, locationError, calculationMethod, madhab],
+    [theme, language, city, prayerNotifications, prayerNotificationsPending, prayerNotificationsError, adhan, location, locationError, calculationMethod, madhab],
   );
 
   return <PreferencesContext.Provider value={value}>{children}</PreferencesContext.Provider>;

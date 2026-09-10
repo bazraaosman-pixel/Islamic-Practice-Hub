@@ -7,7 +7,9 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { ScreenShell } from '@/components/NoorUI';
 import { useColors } from '@/hooks/useColors';
-import { AdhkarPeriod, adhkarSets, DhikrEntry, adhkarAttribution } from '@/lib/adhkarData';
+import { AdhkarPeriod, adhkarSets, DhikrEntry, adhkarAttribution, adhkarCategoryCopy } from '@/lib/adhkarData';
+import { useI18n } from '@/lib/i18n';
+import { adhkarEnglishAttribution, adhkarEnglishByReference } from '@/lib/adhkarEnglishData';
 
 type Counts = Record<string, number>;
 
@@ -35,9 +37,19 @@ const periodCopy: Record<AdhkarPeriod, { eyebrow: string; title: string; subtitl
 
 export default function AdhkarDetailScreen() {
   const colors = useColors();
+  const { text, isArabic } = useI18n();
   const params = useLocalSearchParams<{ period?: string }>();
   const period: AdhkarPeriod = params.period === 'evening' || params.period === 'prayer' || params.period === 'sleep' ? params.period : 'morning';
   const copy = periodCopy[period];
+  const localizedCopy = {
+    eyebrow: isArabic ? copy.eyebrow : (period === 'morning' ? 'A blessed beginning' : period === 'evening' ? 'A peaceful close' : period === 'prayer' ? 'After the obligatory prayer' : 'Before sleep'),
+    title: isArabic ? copy.title : adhkarCategoryCopy[period].en,
+    subtitle: isArabic ? copy.subtitle : (period === 'morning' ? 'Begin your day with a present heart' : period === 'evening' ? 'Close your day with peace and tranquility' : period === 'prayer' ? 'Remember Allah after every prayer' : 'End your day remembering Allah'),
+  };
+  const englishMeaning = (entry: DhikrEntry) => {
+    const reference = Number(entry.source.match(/\((\d+)\)\s*$/)?.[1]);
+    return adhkarEnglishByReference[reference]?.[0];
+  };
   const entries = adhkarSets[period];
   const storageKey = `@noor-al-salah/adhkar/${period}`;
   const [counts, setCounts] = useState<Counts>({});
@@ -92,11 +104,11 @@ export default function AdhkarDetailScreen() {
     <ScreenShell>
       <View style={styles.topBar}>
         <Pressable testID="adhkar-detail-back" onPress={() => router.back()} style={[styles.backButton, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <Feather name="arrow-right" size={19} color={colors.foreground} />
+          <Feather name={isArabic ? 'arrow-right' : 'arrow-left'} size={19} color={colors.foreground} />
         </Pressable>
-        <View style={styles.titleCopy}>
-          <Text style={[styles.eyebrow, { color: colors.primary }]}>{copy.eyebrow}</Text>
-          <Text style={[styles.title, { color: colors.foreground }]}>{copy.title}</Text>
+         <View style={[styles.titleCopy, { alignItems: isArabic ? 'flex-end' : 'flex-start' }]}>
+           <Text style={[styles.eyebrow, { color: colors.primary, textAlign: isArabic ? 'right' : 'left' }]}>{localizedCopy.eyebrow}</Text>
+           <Text style={[styles.title, { color: colors.foreground, textAlign: isArabic ? 'right' : 'left' }]}>{localizedCopy.title}</Text>
         </View>
         <View style={[styles.headerIcon, { backgroundColor: colors.softGold }]}>
           <Feather name={copy.icon} size={19} color={colors.accentForeground} />
@@ -112,17 +124,17 @@ export default function AdhkarDetailScreen() {
             style={[styles.switchButton, period === item && { backgroundColor: colors.card }]}
           >
             <Feather name={item === 'morning' ? 'sunrise' : 'moon'} size={15} color={period === item ? colors.primary : colors.mutedForeground} />
-            <Text style={[styles.switchText, { color: period === item ? colors.primary : colors.mutedForeground }]}>{item === 'morning' ? 'الصباح' : item === 'evening' ? 'المساء' : item === 'prayer' ? 'بعد الصلاة' : 'النوم'}</Text>
+             <Text style={[styles.switchText, { color: period === item ? colors.primary : colors.mutedForeground }]}>{isArabic ? (item === 'morning' ? 'الصباح' : item === 'evening' ? 'المساء' : item === 'prayer' ? 'بعد الصلاة' : 'النوم') : adhkarCategoryCopy[item].en}</Text>
           </Pressable>
         ))}
       </View>
 
       <LinearGradient colors={[colors.hero, colors.primary]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.heroCard}>
         <View style={styles.heroCircle} />
-        <View style={styles.heroCopy}>
-          <Text style={[styles.heroLabel, { color: colors.heroMuted }]}>ورد اليوم</Text>
-          <Text style={[styles.heroTitle, { color: colors.cream }]}>{copy.subtitle}</Text>
-          <Text style={[styles.heroProgress, { color: colors.heroMuted }]}>{totalDone} من {totalRepeats} تكراراً مكتمل</Text>
+         <View style={[styles.heroCopy, { alignItems: isArabic ? 'flex-end' : 'flex-start' }]}>
+           <Text style={[styles.heroLabel, { color: colors.heroMuted, textAlign: isArabic ? 'right' : 'left' }]}>{text('ورد اليوم', "Today's wird")}</Text>
+           <Text style={[styles.heroTitle, { color: colors.cream, textAlign: isArabic ? 'right' : 'left' }]}>{localizedCopy.subtitle}</Text>
+           <Text style={[styles.heroProgress, { color: colors.heroMuted }]}>{isArabic ? `${totalDone} من ${totalRepeats} تكراراً مكتمل` : `${totalDone} of ${totalRepeats} repetitions complete`}</Text>
         </View>
         <View style={[styles.progressCircle, { borderColor: colors.gold }]}>
           <Text style={[styles.progressValue, { color: colors.cream }]}>{progress}%</Text>
@@ -130,8 +142,8 @@ export default function AdhkarDetailScreen() {
       </LinearGradient>
 
       <View style={styles.sectionHeader}>
-        <Text style={[styles.sectionTitle, { color: colors.foreground }]}>{copy.title}</Text>
-        <Text style={[styles.sectionCount, { color: colors.primary }]}>{entries.length} أذكار</Text>
+         <Text style={[styles.sectionTitle, { color: colors.foreground, textAlign: isArabic ? 'right' : 'left' }]}>{localizedCopy.title}</Text>
+         <Text style={[styles.sectionCount, { color: colors.primary }]}>{isArabic ? `${entries.length} أذكار` : `${entries.length} supplications`}</Text>
       </View>
 
       <View style={styles.entries}>
@@ -154,10 +166,10 @@ export default function AdhkarDetailScreen() {
               </View>
               <View style={styles.entryCopy}>
                 <Text style={[styles.entryArabic, { color: colors.foreground }]}>{entry.arabic}</Text>
-                <Text style={[styles.entryTranslation, { color: colors.mutedForeground }]}>{entry.translation}</Text>
-                <Text style={[styles.sourceText, { color: colors.mutedForeground }]}>{entry.source}</Text>
+                 <Text style={[styles.entryTranslation, { color: colors.mutedForeground, textAlign: isArabic ? 'right' : 'left', writingDirection: isArabic ? 'rtl' : 'ltr' }]}>{isArabic ? entry.translation : englishMeaning(entry)}</Text>
+                  <Text style={[styles.sourceText, { color: colors.mutedForeground, textAlign: isArabic ? 'right' : 'left', writingDirection: isArabic ? 'rtl' : 'ltr' }]}>{isArabic ? entry.source : `Hisn al-Muslim · ${entry.source.match(/\((\d+)\)\s*$/)?.[1] ?? ''}`}</Text>
                 <View style={styles.entryMeta}>
-                  <Text style={[styles.tapHint, { color: colors.primary }]}>{isComplete ? 'تم بحمد الله' : 'اضغط للتكرار'}</Text>
+                   <Text style={[styles.tapHint, { color: colors.primary }]}>{isComplete ? text('تم بحمد الله', 'Completed, praise be to Allah') : text('اضغط للتكرار', 'Tap to repeat')}</Text>
                   <Text style={[styles.repeatText, { color: colors.mutedForeground }]}>{done} / {entry.repeat}</Text>
                 </View>
               </View>
@@ -169,13 +181,13 @@ export default function AdhkarDetailScreen() {
         })}
       </View>
       <Pressable testID="reset-adhkar" onPress={() => { countsRef.current = {}; setCounts({}); writeQueue.current = writeQueue.current.then(() => AsyncStorage.setItem(storageKey, JSON.stringify({ day: dayKey, counts: {} }))).catch(() => undefined); }} style={[styles.resetButton, { borderColor: colors.border }]}>
-        <Feather name="refresh-cw" size={14} color={colors.primary} /><Text style={[styles.resetText, { color: colors.primary }]}>تصفير ورد اليوم</Text>
+         <Feather name="refresh-cw" size={14} color={colors.primary} /><Text style={[styles.resetText, { color: colors.primary }]}>{text('تصفير ورد اليوم', 'Reset today’s wird')}</Text>
       </Pressable>
-      <Text style={[styles.attribution, { color: colors.mutedForeground }]}>{adhkarAttribution}</Text>
+       <Text style={[styles.attribution, { color: colors.mutedForeground, textAlign: isArabic ? 'right' : 'left' }]}>{isArabic ? adhkarAttribution : adhkarEnglishAttribution}</Text>
 
       <View style={[styles.footerNote, { backgroundColor: colors.softGold }]}>
         <Feather name="heart" size={15} color={colors.accentForeground} />
-        <Text style={[styles.footerText, { color: colors.accentForeground }]}>اضغط على بطاقة الذكر لزيادة العداد، وسيُحفظ تقدمك تلقائياً على جهازك.</Text>
+         <Text style={[styles.footerText, { color: colors.accentForeground, textAlign: isArabic ? 'right' : 'left' }]}>{text('اضغط على بطاقة الذكر لزيادة العداد، وسيُحفظ تقدمك تلقائياً على جهازك.', 'Tap a supplication card to increase the counter. Your progress is saved automatically.')}</Text>
       </View>
     </ScreenShell>
   );

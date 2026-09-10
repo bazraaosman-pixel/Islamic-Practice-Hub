@@ -8,6 +8,7 @@ import { PageHeader, PrayerRow, QuickAction, ScreenShell, SectionHeading } from 
 import { useColors } from '@/hooks/useColors';
 import { getCountdown, getNextPrayer, getPrayerTimes } from '@/lib/prayerData';
 import { usePreferences } from '@/context/PreferencesContext';
+import { useI18n } from '@/lib/i18n';
 
 function getDateCopy() {
   const now = new Date();
@@ -20,11 +21,16 @@ export default function HomeScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { city, location, calculationMethod, madhab, refreshLocation } = usePreferences();
+  const { text, isArabic, t } = useI18n();
   const [now, setNow] = useState(new Date());
   const prayers = useMemo(() => getPrayerTimes(location, now, calculationMethod, madhab), [location, calculationMethod, madhab, now.toDateString()]);
   const tomorrowPrayers = useMemo(() => { const date = new Date(now); date.setDate(date.getDate() + 1); return getPrayerTimes(location, date, calculationMethod, madhab); }, [location, calculationMethod, madhab, now.toDateString()]);
   const nextPrayer = useMemo(() => getNextPrayer(now, prayers, tomorrowPrayers), [now, prayers, tomorrowPrayers]);
-  const dates = useMemo(getDateCopy, [now.getDate()]);
+  const dates = useMemo(() => {
+    const date = new Intl.DateTimeFormat(isArabic ? 'ar-EG' : 'en-US', { weekday: 'long', day: 'numeric', month: 'long' }).format(now);
+    const hijri = new Intl.DateTimeFormat(isArabic ? 'ar-SA-u-ca-islamic-umalqura' : 'en-US-u-ca-islamic-umalqura', { day: 'numeric', month: 'long', year: 'numeric' }).format(now);
+    return { gregorian: date, hijri };
+  }, [now.getDate(), isArabic]);
 
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 30_000);
@@ -34,40 +40,40 @@ export default function HomeScreen() {
   return (
     <ScreenShell style={{ paddingTop: Math.max(insets.top, 10) }}>
       <PageHeader
-        eyebrow="السلام عليكم"
-        title="نور الصلاة"
+        eyebrow={text('السلام عليكم', 'Peace be upon you')}
+        title={t('appName')}
         subtitle={`${dates.gregorian}  ·  ${dates.hijri}`}
-        right={<Pressable testID="location-selector" style={styles.locationButton} onPress={refreshLocation}><Feather name="map-pin" size={14} color={colors.primary} /><Text style={[styles.locationText, { color: colors.primary }]}>{city}</Text></Pressable>}
+        right={<Pressable testID="location-selector" accessibilityLabel={text('تحديث الموقع', 'Refresh location')} style={[styles.locationButton, { alignItems: isArabic ? 'flex-end' : 'flex-start' }]} onPress={refreshLocation}><Feather name="map-pin" size={14} color={colors.primary} /><Text style={[styles.locationText, { color: colors.primary, textAlign: isArabic ? 'right' : 'left' }]}>{city}</Text></Pressable>}
       />
 
       <LinearGradient colors={[colors.hero, colors.primary]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.heroCard}>
         <View style={styles.heroOrb} />
         <View style={styles.heroTop}>
           <View>
-            <Text style={[styles.heroOverline, { color: colors.heroMuted }]}>الصلاة القادمة</Text>
-            <Text style={[styles.heroPrayer, { color: colors.cream }]}>{nextPrayer.arabic}</Text>
-            <Text style={[styles.heroEnglish, { color: colors.heroMuted }]}>{nextPrayer.english} · {nextPrayer.time}</Text>
+            <Text style={[styles.heroOverline, { color: colors.heroMuted, textAlign: isArabic ? 'right' : 'left' }]}>{text('الصلاة القادمة', 'Next prayer')}</Text>
+            <Text style={[styles.heroPrayer, { color: colors.cream, textAlign: isArabic ? 'right' : 'left' }]}>{isArabic ? nextPrayer.arabic : nextPrayer.english}</Text>
+            <Text style={[styles.heroEnglish, { color: colors.heroMuted, textAlign: isArabic ? 'right' : 'left' }]}>{nextPrayer.time}</Text>
           </View>
           <View style={styles.moonMark}><Feather name="moon" size={21} color={colors.gold} /></View>
         </View>
         <View style={styles.heroBottom}>
-          <Text style={[styles.heroCountdown, { color: colors.cream }]}>{getCountdown(nextPrayer, now)}</Text>
-          <View style={styles.heroCaptionRow}><View style={[styles.liveDot, { backgroundColor: colors.gold }]} /><Text style={[styles.heroCaption, { color: colors.heroMuted }]}>متبقي على الأذان</Text></View>
+          <Text style={[styles.heroCountdown, { color: colors.cream, textAlign: isArabic ? 'right' : 'left' }]}>{getCountdown(nextPrayer, now)}</Text>
+          <View style={[styles.heroCaptionRow, { flexDirection: isArabic ? 'row' : 'row-reverse' }]}><View style={[styles.liveDot, { backgroundColor: colors.gold }]} /><Text style={[styles.heroCaption, { color: colors.heroMuted, textAlign: isArabic ? 'right' : 'left' }]}>{text('متبقي على الأذان', 'Time until adhan')}</Text></View>
         </View>
       </LinearGradient>
 
       <View style={styles.quickSection}>
-        <SectionHeading title="الوصول السريع" action="كل الأدوات" />
+        <SectionHeading title={text('الوصول السريع', 'Quick access')} action={text('كل الأدوات', 'All tools')} />
         <View style={styles.quickGrid}>
-          <QuickAction icon="book-open" label="القرآن" subtitle="تابع وردك" tone="teal" onPress={() => router.push('/quran')} />
-          <QuickAction icon="compass" label="القبلة" subtitle="اتجاه الكعبة" tone="gold" onPress={() => router.push('/qibla')} />
-          <QuickAction icon="heart" label="الأذكار" subtitle="لحظتك اليومية" tone="rose" onPress={() => router.push('/adhkar')} />
-          <QuickAction icon="repeat" label="المسبحة" subtitle="سبّح واطمئن" tone="blue" onPress={() => router.push('/tasbih')} />
+          <QuickAction icon="book-open" label={t('quran')} subtitle={text('تابع وردك', 'Continue your reading')} tone="teal" onPress={() => router.push('/quran')} />
+          <QuickAction icon="compass" label={t('qibla')} subtitle={text('اتجاه الكعبة', 'Kaaba direction')} tone="gold" onPress={() => router.push('/qibla')} />
+          <QuickAction icon="heart" label={t('adhkar')} subtitle={text('لحظتك اليومية', 'Your daily moment')} tone="rose" onPress={() => router.push('/adhkar')} />
+          <QuickAction icon="repeat" label={t('tasbeeh')} subtitle={text('سبّح واطمئن', 'Remember and find peace')} tone="blue" onPress={() => router.push('/tasbih')} />
         </View>
       </View>
 
       <View style={styles.prayerSection}>
-        <SectionHeading title="مواقيت الصلاة" action="عرض الكل" />
+        <SectionHeading title={text('مواقيت الصلاة', 'Prayer times')} action={text('عرض الكل', 'View all')} />
         <View style={styles.prayerList}>
           {prayers.filter((prayer) => prayer.id !== 'sunrise').map((prayer) => (
             <PrayerRow key={prayer.id} prayer={prayer} active={prayer.id === nextPrayer.id} onPress={() => router.push('/prayer')} />

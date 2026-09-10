@@ -33,7 +33,7 @@
       "expo-audio",
       [
         "expo-notifications",
-        { "sounds": ["./assets/audio/traditional-adhan.wav"] }
+         { "sounds": ["./assets/audio/makkah-adhan.wav", "./assets/audio/madinah-adhan.wav"] }
       ]
     ],
     "experiments": {

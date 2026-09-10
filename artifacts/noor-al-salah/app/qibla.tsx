@@ -7,6 +7,7 @@ import { Magnetometer } from 'expo-sensors';
 import { ScreenShell } from '@/components/NoorUI';
 import { useColors } from '@/hooks/useColors';
 import { usePreferences } from '@/context/PreferencesContext';
+import { useI18n } from '@/lib/i18n';
 
 function bearingToKaaba(lat: number, lon: number) {
   const φ1 = lat * Math.PI / 180; const φ2 = 21.4225 * Math.PI / 180; const Δλ = (39.8262 - lon) * Math.PI / 180;
@@ -16,6 +17,7 @@ function bearingToKaaba(lat: number, lon: number) {
 export default function QiblaScreen() {
   const colors = useColors();
   const { location } = usePreferences();
+  const { text, isArabic } = useI18n();
   const [heading, setHeading] = useState(0);
   const [sensorAvailable, setSensorAvailable] = useState<boolean | null>(Platform.OS === 'web' ? false : null);
   const bearing = bearingToKaaba(location.latitude, location.longitude);
@@ -40,15 +42,15 @@ export default function QiblaScreen() {
   const rotation = `${Math.round(bearing - heading)}deg`;
   return (
     <ScreenShell>
-      <View style={styles.topBar}><Pressable testID="qibla-back" onPress={() => router.back()} style={[styles.backButton, { backgroundColor: colors.card, borderColor: colors.border }]}><Feather name="arrow-right" size={19} color={colors.foreground} /></Pressable><View style={styles.titleCopy}><Text style={[styles.eyebrow, { color: colors.primary }]}>وجهتك أينما كنت</Text><Text style={[styles.title, { color: colors.foreground }]}>اتجاه القبلة</Text></View><View style={{ width: 42 }} /></View>
+       <View style={[styles.topBar, { flexDirection: isArabic ? 'row' : 'row-reverse' }]}><Pressable testID="qibla-back" accessibilityLabel={text('العودة', 'Back')} onPress={() => router.back()} style={[styles.backButton, { backgroundColor: colors.card, borderColor: colors.border }]}><Feather name={isArabic ? 'arrow-right' : 'arrow-left'} size={19} color={colors.foreground} /></Pressable><View style={[styles.titleCopy, { alignItems: isArabic ? 'flex-end' : 'flex-start' }]}><Text style={[styles.eyebrow, { color: colors.primary, textAlign: isArabic ? 'right' : 'left' }]}>{text('وجهتك أينما كنت', 'Your direction wherever you are')}</Text><Text style={[styles.title, { color: colors.foreground, textAlign: isArabic ? 'right' : 'left' }]}>{text('اتجاه القبلة', 'Qibla direction')}</Text></View><View style={{ width: 42 }} /></View>
       <LinearGradient colors={[colors.hero, colors.primary]} start={{ x: 0.2, y: 0 }} end={{ x: 0.9, y: 1 }} style={styles.compassCard}>
         <View style={styles.compassGlow} />
-        <Text style={[styles.compassEyebrow, { color: colors.heroMuted }]}>اتجاه مكة المكرمة</Text>
+         <Text style={[styles.compassEyebrow, { color: colors.heroMuted }]}>{text('اتجاه مكة المكرمة', 'Direction to Makkah')}</Text>
          <View style={styles.compass}><View style={[styles.ring, { borderColor: 'rgba(248,244,233,0.24)' }]} /><View style={[styles.ringSmall, { borderColor: 'rgba(248,244,233,0.18)' }]} /><Text style={[styles.north, { color: colors.gold }]}>N</Text><View style={[styles.needleGroup, { transform: [{ rotate: rotation }] }]}><Feather name="navigation" size={19} color={colors.gold} style={styles.navigationMark} /><View style={[styles.needle, { backgroundColor: colors.gold }]} /><View style={[styles.needleTail, { backgroundColor: colors.cream }]} /></View><View style={[styles.centerDot, { backgroundColor: colors.cream, borderColor: colors.gold }]} /></View>
-         <Text style={[styles.degree, { color: colors.cream }]}>{direction}°</Text><Text style={[styles.degreeLabel, { color: colors.heroMuted }]}>اتجاه القبلة · من موقعك الحالي</Text>
+          <Text style={[styles.degree, { color: colors.cream }]}>{direction}°</Text><Text style={[styles.degreeLabel, { color: colors.heroMuted }]}>{text('اتجاه القبلة · من موقعك الحالي', 'Qibla direction · from your current location')}</Text>
       </LinearGradient>
-       <View style={[styles.instructionCard, { backgroundColor: colors.card, borderColor: colors.border }]}><View style={[styles.instructionIcon, { backgroundColor: colors.softGold }]}><Feather name={sensorAvailable === false ? 'info' : 'rotate-ccw'} size={19} color={colors.accentForeground} /></View><View style={styles.instructionCopy}><Text style={[styles.instructionTitle, { color: colors.foreground }]}>{sensorAvailable === false ? 'الوضع اليدوي' : sensorAvailable === null ? 'جارٍ تشغيل البوصلة' : 'للحصول على دقة أفضل'}</Text><Text style={[styles.instructionBody, { color: colors.mutedForeground }]}>{sensorAvailable === false ? `البوصلة غير متاحة على هذا الجهاز. وجّه الهاتف يدوياً إلى ${direction}° من الشمال.` : 'ضع الهاتف بشكل مستوٍ، وحرّكه على شكل رقم ٨ للمعايرة، وابتعد عن الأجهزة المعدنية.'}</Text></View></View>
-       <View style={styles.footerNote}><Feather name="info" size={15} color={colors.mutedForeground} /><Text style={[styles.footerText, { color: colors.mutedForeground }]}>حرّك الهاتف على شكل رقم ٨ للمعايرة، وابتعد عن المعادن. إن لم يدعم جهازك البوصلة، استخدم الاتجاه {direction}° يدوياً.</Text></View>
+        <View style={[styles.instructionCard, { backgroundColor: colors.card, borderColor: colors.border, flexDirection: isArabic ? 'row' : 'row-reverse' }]}><View style={[styles.instructionIcon, { backgroundColor: colors.softGold }]}><Feather name={sensorAvailable === false ? 'info' : 'rotate-ccw'} size={19} color={colors.accentForeground} /></View><View style={[styles.instructionCopy, { alignItems: isArabic ? 'flex-end' : 'flex-start' }]}><Text style={[styles.instructionTitle, { color: colors.foreground, textAlign: isArabic ? 'right' : 'left' }]}>{sensorAvailable === false ? text('الوضع اليدوي', 'Manual mode') : sensorAvailable === null ? text('جارٍ تشغيل البوصلة', 'Starting compass') : text('للحصول على دقة أفضل', 'For better accuracy')}</Text><Text style={[styles.instructionBody, { color: colors.mutedForeground, textAlign: isArabic ? 'right' : 'left' }]}>{sensorAvailable === false ? text(`البوصلة غير متاحة على هذا الجهاز. وجّه الهاتف يدوياً إلى ${direction}° من الشمال.`, `Compass is unavailable on this device. Point your phone manually to ${direction}° from north.`) : text('ضع الهاتف بشكل مستوٍ، وحرّكه على شكل رقم ٨ للمعايرة، وابتعد عن الأجهزة المعدنية.', 'Lay the phone flat, move it in a figure eight to calibrate, and stay away from metal objects.')}</Text></View></View>
+        <View style={styles.footerNote}><Feather name="info" size={15} color={colors.mutedForeground} /><Text style={[styles.footerText, { color: colors.mutedForeground }]}>{text(`حرّك الهاتف على شكل رقم ٨ للمعايرة، وابتعد عن المعادن. إن لم يدعم جهازك البوصلة، استخدم الاتجاه ${direction}° يدوياً.`, `Move the phone in a figure eight to calibrate and stay away from metal. If your device has no compass, use ${direction}° manually.`)}</Text></View>
     </ScreenShell>
   );
 }

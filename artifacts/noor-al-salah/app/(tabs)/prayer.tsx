@@ -6,37 +6,39 @@ import { PageHeader, PrayerRow, ScreenShell, SectionHeading, StatChip } from '@/
 import { useColors } from '@/hooks/useColors';
 import { getNextPrayer, getPrayerTimes } from '@/lib/prayerData';
 import { usePreferences } from '@/context/PreferencesContext';
+import { useI18n } from '@/lib/i18n';
 
 export default function PrayerScreen() {
   const colors = useColors();
   const { city, location, calculationMethod, madhab } = usePreferences();
+  const { text, isArabic, t } = useI18n();
   const [selectedDay, setSelectedDay] = useState(0);
   const selectedDate = useMemo(() => { const date = new Date(); date.setDate(date.getDate() + selectedDay); return date; }, [selectedDay]);
   const prayers = useMemo(() => getPrayerTimes(location, selectedDate, calculationMethod, madhab), [location, calculationMethod, madhab, selectedDate]);
-  const days = useMemo(() => [0, 1, 2].map((offset) => offset === 0 ? 'اليوم' : offset === 1 ? 'غداً' : new Intl.DateTimeFormat('ar-EG', { weekday: 'long' }).format(new Date(Date.now() + offset * 86400000))), []);
-  const formattedDate = useMemo(() => new Intl.DateTimeFormat('ar-EG', { day: 'numeric', month: 'long' }).format(selectedDate), [selectedDate]);
+  const days = useMemo(() => [0, 1, 2].map((offset) => offset === 0 ? text('اليوم', 'Today') : offset === 1 ? text('غداً', 'Tomorrow') : new Intl.DateTimeFormat(isArabic ? 'ar-EG' : 'en-US', { weekday: 'long' }).format(new Date(Date.now() + offset * 86400000))), [isArabic]);
+  const formattedDate = useMemo(() => new Intl.DateTimeFormat(isArabic ? 'ar-EG' : 'en-US', { day: 'numeric', month: 'long' }).format(selectedDate), [selectedDate, isArabic]);
   const nextPrayer = selectedDay === 0 ? getNextPrayer(new Date(), prayers) : null;
-  const methodLabel = calculationMethod === 'muslimWorldLeague' ? 'رابطة العالم الإسلامي' : calculationMethod === 'egyptian' ? 'الهيئة المصرية' : calculationMethod;
+  const methodLabel = calculationMethod === 'muslimWorldLeague' ? text('رابطة العالم الإسلامي', 'Muslim World League') : calculationMethod === 'egyptian' ? text('الهيئة المصرية', 'Egyptian General Authority') : calculationMethod;
 
   return (
     <ScreenShell>
-      <PageHeader eyebrow="مواقيت اليوم" title="الصلاة" subtitle={`${city}  ·  ${formattedDate}`} right={<Pressable testID="prayer-settings" onPress={() => router.push('/settings')} style={[styles.settingsCircle, { backgroundColor: colors.softTeal }]}><Feather name="sliders" size={18} color={colors.primary} /></Pressable>} />
+      <PageHeader eyebrow={text('مواقيت اليوم', "Today's times")} title={t('prayer')} subtitle={`${city}  ·  ${formattedDate}`} right={<Pressable testID="prayer-settings" accessibilityLabel={text('إعدادات الصلاة', 'Prayer settings')} onPress={() => router.push('/settings')} style={[styles.settingsCircle, { backgroundColor: colors.softTeal }]}><Feather name="sliders" size={18} color={colors.primary} /></Pressable>} />
       <View style={[styles.dayPicker, { backgroundColor: colors.muted }]}>
         {days.map((day, index) => <Pressable key={day} testID={`day-${index}`} onPress={() => setSelectedDay(index)} style={[styles.dayButton, selectedDay === index && { backgroundColor: colors.card }]}><Text style={[styles.dayText, { color: selectedDay === index ? colors.primary : colors.mutedForeground }]}>{day}</Text></Pressable>)}
       </View>
       <View style={styles.statsRow}>
-         <StatChip icon="sunrise" value={prayers.find((p) => p.id === 'sunrise')?.time ?? '--:--'} label="الشروق" />
-         <StatChip icon="sunset" value={prayers.find((p) => p.id === 'maghrib')?.time ?? '--:--'} label="الغروب" />
+         <StatChip icon="sunrise" value={prayers.find((p) => p.id === 'sunrise')?.time ?? '--:--'} label={text('الشروق', 'Sunrise')} />
+         <StatChip icon="sunset" value={prayers.find((p) => p.id === 'maghrib')?.time ?? '--:--'} label={text('الغروب', 'Sunset')} />
       </View>
       <View style={styles.listWrap}>
-        <SectionHeading title="المواقيت" action="طريقة الحساب" />
-        <View style={styles.methodLine}><View style={[styles.methodDot, { backgroundColor: colors.primary }]} /><Text style={[styles.methodText, { color: colors.mutedForeground }]}>{methodLabel} · العصر: {madhab === 'hanafi' ? 'الحنفي' : 'الشافعي'}</Text><Feather name="chevron-left" size={15} color={colors.mutedForeground} /></View>
+         <SectionHeading title={text('المواقيت', 'Times')} action={text('طريقة الحساب', 'Calculation method')} />
+         <View style={styles.methodLine}><View style={[styles.methodDot, { backgroundColor: colors.primary }]} /><Text style={[styles.methodText, { color: colors.mutedForeground, textAlign: isArabic ? 'right' : 'left' }]}>{methodLabel} · {text('العصر', 'Asr')}: {madhab === 'hanafi' ? text('الحنفي', 'Hanafi') : text('الشافعي', 'Shafi')}</Text><Feather name={isArabic ? 'chevron-left' : 'chevron-right'} size={15} color={colors.mutedForeground} /></View>
          <View style={styles.prayerList}>{prayers.map((prayer) => <PrayerRow key={prayer.id} prayer={prayer} active={prayer.id === nextPrayer?.id} />)}</View>
       </View>
       <Pressable testID="open-qibla" onPress={() => router.push('/qibla')} style={({ pressed }) => [styles.qiblaBanner, { backgroundColor: colors.hero }, pressed && { opacity: 0.8 }]}>
         <View style={[styles.qiblaIcon, { backgroundColor: 'rgba(255,255,255,0.12)' }]}><Feather name="compass" size={20} color={colors.gold} /></View>
-        <View style={styles.qiblaCopy}><Text style={[styles.qiblaTitle, { color: colors.cream }]}>تحقق من اتجاه القبلة</Text><Text style={[styles.qiblaSubtitle, { color: colors.heroMuted }]}>بوصلة دقيقة تساعدك أينما كنت</Text></View>
-        <Feather name="arrow-left" size={18} color={colors.cream} />
+         <View style={styles.qiblaCopy}><Text style={[styles.qiblaTitle, { color: colors.cream }]}>{text('تحقق من اتجاه القبلة', 'Check the Qibla direction')}</Text><Text style={[styles.qiblaSubtitle, { color: colors.heroMuted }]}>{text('بوصلة دقيقة تساعدك أينما كنت', 'An accurate compass to guide you anywhere')}</Text></View>
+         <Feather name={isArabic ? 'arrow-left' : 'arrow-right'} size={18} color={colors.cream} />
       </Pressable>
     </ScreenShell>
   );

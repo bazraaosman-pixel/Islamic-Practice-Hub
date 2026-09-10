@@ -6,29 +6,30 @@ import { BlurView } from 'expo-blur';
 import { isLiquidGlassAvailable } from 'expo-glass-effect';
 import { Tabs } from 'expo-router';
 import { NativeTabs } from 'expo-router/unstable-native-tabs';
+import { useI18n } from '@/lib/i18n';
 
 const tabMeta = [
-  { name: 'index', label: 'الرئيسية', icon: 'home' as const, sf: 'house' },
-  { name: 'prayer', label: 'الصلاة', icon: 'clock' as const, sf: 'clock' },
-  { name: 'quran', label: 'القرآن', icon: 'book-open' as const, sf: 'book' },
-  { name: 'adhkar', label: 'الأذكار', icon: 'heart' as const, sf: 'heart' },
-  { name: 'settings', label: 'الإعدادات', icon: 'settings' as const, sf: 'gearshape' },
+  { name: 'index', key: 'home', icon: 'home' as const, sf: 'house' },
+  { name: 'prayer', key: 'prayer', icon: 'clock' as const, sf: 'clock' },
+  { name: 'quran', key: 'quran', icon: 'book-open' as const, sf: 'book' },
+  { name: 'adhkar', key: 'adhkar', icon: 'heart' as const, sf: 'heart' },
+  { name: 'settings', key: 'settings', icon: 'settings' as const, sf: 'gearshape' },
 ] as const;
 
-function NativeTabLayout() {
+function NativeTabLayout({ labels }: { labels: Record<string, string> }) {
   return (
     <NativeTabs>
       {tabMeta.map((tab) => (
         <NativeTabs.Trigger key={tab.name} name={tab.name}>
           <NativeTabs.Trigger.Icon sf={{ default: tab.sf as any, selected: `${tab.sf}.fill` as any }} />
-          <NativeTabs.Trigger.Label>{tab.label}</NativeTabs.Trigger.Label>
+          <NativeTabs.Trigger.Label>{labels[tab.key]}</NativeTabs.Trigger.Label>
         </NativeTabs.Trigger>
       ))}
     </NativeTabs>
   );
 }
 
-function ClassicTabLayout() {
+function ClassicTabLayout({ labels }: { labels: Record<string, string> }) {
   const colors = useColors();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
@@ -63,7 +64,7 @@ function ClassicTabLayout() {
           key={tab.name}
           name={tab.name}
           options={{
-            title: tab.label,
+            title: labels[tab.key],
             tabBarIcon: ({ color, size }) => <Feather name={tab.icon} size={size ?? 21} color={color} />,
           }}
         />
@@ -73,5 +74,7 @@ function ClassicTabLayout() {
 }
 
 export default function TabLayout() {
-  return isLiquidGlassAvailable() ? <NativeTabLayout /> : <ClassicTabLayout />;
+  const { t } = useI18n();
+  const labels = { home: t('home'), prayer: t('prayer'), quran: t('quran'), adhkar: t('adhkar'), settings: t('settings') };
+  return isLiquidGlassAvailable() ? <NativeTabLayout labels={labels} /> : <ClassicTabLayout labels={labels} />;
 }

@@ -8,6 +8,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
 import { quranSurahs } from '@/lib/quranData';
 import { getSurahAudioUrl, sudaneseQaris } from '@/lib/quranAudio';
+import { useI18n } from '@/lib/i18n';
+import { getEnglishVerse, quranEnglishAttribution } from '@/lib/quranEnglish';
 
 function formatTime(value: number) {
   const seconds = Number.isFinite(value) ? Math.max(0, Math.floor(value)) : 0;
@@ -16,6 +18,7 @@ function formatTime(value: number) {
 
 export default function QuranReader() {
   const colors = useColors();
+  const { text, isArabic } = useI18n();
   const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id?: string }>();
   const index = Math.max(1, Math.min(114, Number(id) || 1));
@@ -71,20 +74,20 @@ export default function QuranReader() {
           <View style={styles.header}>
             <View style={styles.top}>
               <Pressable testID="quran-reader-back" onPress={() => router.back()} style={[styles.backButton, { borderColor: colors.border, backgroundColor: colors.card }]}>
-                <Feather name="arrow-right" size={21} color={colors.foreground} />
+                <Feather name={isArabic ? 'arrow-right' : 'arrow-left'} size={21} color={colors.foreground} />
               </Pressable>
-              <View style={styles.heading}>
-                <Text style={[styles.name, { color: colors.foreground }]}>{surah.arabic}</Text>
-                <Text style={{ color: colors.mutedForeground }}>{surah.english} · {surah.totalVerses} آية</Text>
+              <View style={[styles.heading, { alignItems: isArabic ? 'flex-end' : 'flex-start' }]}>
+                <Text style={[styles.name, { color: colors.foreground, textAlign: isArabic ? 'right' : 'left' }]}>{isArabic ? surah.arabic : surah.english}</Text>
+                <Text style={{ color: colors.mutedForeground, textAlign: isArabic ? 'right' : 'left' }}>{isArabic ? `${surah.english} · ${surah.totalVerses} آية` : `${surah.arabic} · ${surah.totalVerses} verses`}</Text>
               </View>
             </View>
             <View style={[styles.audioCard, { backgroundColor: colors.hero }]}>
               <View style={styles.audioTitleRow}>
-                <View style={styles.audioCopy}>
-                  <Text style={[styles.audioTitle, { color: colors.cream }]}>استمع للسورة</Text>
-                  <Text style={[styles.audioSubtitle, { color: colors.heroMuted }]}>{qari.name} · {qari.riwaya}</Text>
+                 <View style={[styles.audioCopy, { alignItems: isArabic ? 'flex-end' : 'flex-start' }]}>
+                   <Text style={[styles.audioTitle, { color: colors.cream, textAlign: isArabic ? 'right' : 'left' }]}>{text('استمع للسورة', 'Listen to the surah')}</Text>
+                   <Text style={[styles.audioSubtitle, { color: colors.heroMuted, textAlign: isArabic ? 'right' : 'left' }]}>{isArabic ? `${qari.name} · ${qari.riwaya}` : `${qari.id === 'alzain' ? 'Sheikh Al-Zain Muhammad Ahmad' : qari.id === 'noreen' ? 'Sheikh Noreen Muhammad Siddiq' : 'Sheikh Al-Fatih Muhammad Al-Zubair'} · ${qari.riwaya === 'حفص عن عاصم' ? 'Hafs from Asim' : 'Al-Duri from Abu Amr'}`}</Text>
                 </View>
-                <Pressable testID="quran-audio-toggle" accessibilityRole="button" accessibilityLabel={status.playing ? 'إيقاف التلاوة مؤقتاً' : 'تشغيل التلاوة'} onPress={togglePlayback} style={[styles.playButton, { backgroundColor: colors.gold }]}>
+                 <Pressable testID="quran-audio-toggle" accessibilityRole="button" accessibilityLabel={status.playing ? text('إيقاف التلاوة مؤقتاً', 'Pause recitation') : text('تشغيل التلاوة', 'Play recitation')} onPress={togglePlayback} style={[styles.playButton, { backgroundColor: colors.gold }]}>
                   <Feather name={status.playing ? 'pause' : 'play'} size={22} color={colors.hero} />
                 </Pressable>
               </View>
@@ -93,23 +96,25 @@ export default function QuranReader() {
               </View>
               <View style={styles.timeRow}>
                 <Text style={[styles.timeText, { color: colors.heroMuted }]}>{formatTime(status.duration)}</Text>
-                <Text style={[styles.timeText, { color: colors.heroMuted }]}>{status.isBuffering ? 'جارٍ التحميل…' : formatTime(status.currentTime)}</Text>
+                 <Text style={[styles.timeText, { color: colors.heroMuted }]}>{status.isBuffering ? text('جارٍ التحميل…', 'Loading…') : formatTime(status.currentTime)}</Text>
               </View>
               <View style={styles.qariList}>
                 {sudaneseQaris.map((item) => (
                   <Pressable key={item.id} testID={`qari-${item.id}`} onPress={() => selectQari(item.id)} style={[styles.qariButton, { borderColor: qariId === item.id ? colors.gold : colors.heroMuted }, qariId === item.id && { backgroundColor: colors.softTeal }]}>
-                    <Text numberOfLines={1} style={[styles.qariText, { color: qariId === item.id ? colors.cream : colors.heroMuted }]}>{item.name.replace('الشيخ ', '')}</Text>
+                     <Text numberOfLines={1} style={[styles.qariText, { color: qariId === item.id ? colors.cream : colors.heroMuted }]}>{isArabic ? item.name.replace('الشيخ ', '') : item.id === 'alzain' ? 'Al-Zain' : item.id === 'noreen' ? 'Noreen' : 'Al-Fatih'}</Text>
                   </Pressable>
                 ))}
               </View>
-              <Text style={[styles.streamNote, { color: colors.heroMuted }]}>البث عبر MP3Quran · يحتاج اتصالاً بالإنترنت</Text>
+               <Text style={[styles.streamNote, { color: colors.heroMuted, textAlign: isArabic ? 'right' : 'left' }]}>{text('البث عبر MP3Quran · يحتاج اتصالاً بالإنترنت', 'Streamed by MP3Quran · internet connection required')}</Text>
+               {!isArabic ? <Text style={[styles.streamNote, { color: colors.heroMuted, textAlign: 'left' }]}>{quranEnglishAttribution}</Text> : null}
             </View>
             {index !== 1 && index !== 9 ? <View style={[styles.basmala, { backgroundColor: colors.softGold }]}><Text style={[styles.basmalaText, { color: colors.accentForeground }]}>بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ</Text></View> : null}
           </View>
         }
         renderItem={({ item: verse }) => (
-          <View style={[styles.verse, { borderColor: colors.border }]}>
-            <Text style={[styles.verseText, { color: colors.foreground }]}>{verse.text} <Text style={[styles.number, { color: colors.primary }]}>﴿{verse.number}﴾</Text></Text>
+           <View style={[styles.verse, { borderColor: colors.border }]}>
+             <Text style={[styles.verseText, { color: colors.foreground }]}>{verse.text} <Text style={[styles.number, { color: colors.primary }]}>﴿{verse.number}﴾</Text></Text>
+             {!isArabic && getEnglishVerse(index, verse.number) ? <Text style={[styles.verseTranslation, { color: colors.mutedForeground }]}>{getEnglishVerse(index, verse.number)}</Text> : null}
           </View>
         )}
       />
@@ -142,5 +147,6 @@ const styles = StyleSheet.create({
   basmalaText: { fontFamily: 'AmiriQuran_400Regular', fontSize: 22 },
   verse: { borderBottomWidth: 1, paddingVertical: 12 },
   verseText: { fontFamily: 'AmiriQuran_400Regular', fontSize: 24, lineHeight: 48, textAlign: 'right' },
+  verseTranslation: { fontSize: 15, lineHeight: 23, textAlign: 'left', writingDirection: 'ltr', marginTop: 8 },
   number: { fontSize: 14 },
 });

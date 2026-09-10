@@ -15,6 +15,7 @@ import { AmiriQuran_400Regular } from '@expo-google-fonts/amiri-quran';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { PreferencesProvider } from '@/context/PreferencesContext';
+import { useI18n } from '@/lib/i18n';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -22,8 +23,9 @@ SplashScreen.preventAutoHideAsync();
 const queryClient = new QueryClient();
 
 function RootLayoutNav() {
+  const { text } = useI18n();
   return (
-    <Stack screenOptions={{ headerBackTitle: 'Back' }}>
+    <Stack screenOptions={{ headerBackTitle: text('العودة', 'Back') }}>
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="qibla" options={{ headerShown: false }} />
       <Stack.Screen name="tasbih" options={{ headerShown: false }} />

@@ -3,6 +3,7 @@ import React from 'react';
 import { Pressable, ScrollView, StyleProp, StyleSheet, Text, View, ViewStyle } from 'react-native';
 import { useColors } from '@/hooks/useColors';
 import type { Prayer } from '@/lib/prayerData';
+import { useI18n } from '@/lib/i18n';
 
 type IconName = React.ComponentProps<typeof Feather>['name'];
 
@@ -16,16 +17,17 @@ export function ScreenShell({
   style?: StyleProp<ViewStyle>;
 }) {
   const colors = useColors();
+  const { isArabic } = useI18n();
   return scroll ? (
     <ScrollView
-      style={[styles.shell, { backgroundColor: colors.background }, style]}
+      style={[styles.shell, { backgroundColor: colors.background, direction: isArabic ? 'rtl' : 'ltr' }, style]}
       contentContainerStyle={styles.scrollContent}
       showsVerticalScrollIndicator={false}
     >
       {children}
     </ScrollView>
   ) : (
-    <View style={[styles.shell, { backgroundColor: colors.background }, style]}>{children}</View>
+    <View style={[styles.shell, { backgroundColor: colors.background, direction: isArabic ? 'rtl' : 'ltr' }, style]}>{children}</View>
   );
 }
 
@@ -41,12 +43,13 @@ export function PageHeader({
   right?: React.ReactNode;
 }) {
   const colors = useColors();
+  const { isArabic } = useI18n();
   return (
-    <View style={styles.pageHeader}>
+    <View style={[styles.pageHeader, { flexDirection: isArabic ? 'row-reverse' : 'row' }]}>
       <View style={styles.pageHeaderCopy}>
-        {eyebrow ? <Text style={[styles.eyebrow, { color: colors.primary }]}>{eyebrow}</Text> : null}
-        <Text style={[styles.pageTitle, { color: colors.foreground }]}>{title}</Text>
-        {subtitle ? <Text style={[styles.pageSubtitle, { color: colors.mutedForeground }]}>{subtitle}</Text> : null}
+        {eyebrow ? <Text style={[styles.eyebrow, { color: colors.primary, textAlign: isArabic ? 'right' : 'left' }]}>{eyebrow}</Text> : null}
+        <Text style={[styles.pageTitle, { color: colors.foreground, textAlign: isArabic ? 'right' : 'left' }]}>{title}</Text>
+        {subtitle ? <Text style={[styles.pageSubtitle, { color: colors.mutedForeground, textAlign: isArabic ? 'right' : 'left' }]}>{subtitle}</Text> : null}
       </View>
       {right}
     </View>
@@ -84,9 +87,10 @@ export function IconButton({
 
 export function SectionHeading({ title, action }: { title: string; action?: string }) {
   const colors = useColors();
+  const { isArabic } = useI18n();
   return (
-    <View style={styles.sectionHeading}>
-      <Text style={[styles.sectionTitle, { color: colors.foreground }]}>{title}</Text>
+    <View style={[styles.sectionHeading, { flexDirection: isArabic ? 'row-reverse' : 'row' }]}>
+      <Text style={[styles.sectionTitle, { color: colors.foreground, textAlign: isArabic ? 'right' : 'left' }]}>{title}</Text>
       {action ? <Text style={[styles.sectionAction, { color: colors.primary }]}>{action}</Text> : null}
     </View>
   );
@@ -94,6 +98,7 @@ export function SectionHeading({ title, action }: { title: string; action?: stri
 
 export function PrayerRow({ prayer, active = false, onPress }: { prayer: Prayer; active?: boolean; onPress?: () => void }) {
   const colors = useColors();
+  const { t, isArabic } = useI18n();
   const iconColors: Record<Prayer['accent'], string> = {
     gold: colors.gold,
     teal: colors.primary,
@@ -121,13 +126,13 @@ export function PrayerRow({ prayer, active = false, onPress }: { prayer: Prayer;
       <View style={[styles.prayerIcon, { backgroundColor: active ? colors.primary : colors.muted }]}>
         <Feather name={iconNames[prayer.icon]} size={17} color={active ? colors.primaryForeground : iconColors[prayer.accent]} />
       </View>
-      <View style={styles.prayerNames}>
-        <Text style={[styles.prayerArabic, { color: colors.foreground }]}>{prayer.arabic}</Text>
-        <Text style={[styles.prayerEnglish, { color: colors.mutedForeground }]}>{prayer.english}</Text>
+      <View style={[styles.prayerNames, { alignItems: isArabic ? 'flex-end' : 'flex-start' }]}>
+        <Text style={[styles.prayerArabic, { color: colors.foreground, textAlign: isArabic ? 'right' : 'left' }]}>{isArabic ? prayer.arabic : prayer.english}</Text>
+        {isArabic ? <Text style={[styles.prayerEnglish, { color: colors.mutedForeground }]}>{prayer.english}</Text> : null}
       </View>
-      {active ? <View style={[styles.nowPill, { backgroundColor: colors.primary }]}><Text style={[styles.nowPillText, { color: colors.primaryForeground }]}>القادم</Text></View> : null}
+       {active ? <View style={[styles.nowPill, { backgroundColor: colors.primary }]}><Text style={[styles.nowPillText, { color: colors.primaryForeground }]}>{t('current')}</Text></View> : null}
       <Text style={[styles.prayerTime, { color: colors.foreground }]}>{prayer.time}</Text>
-      <Feather name="chevron-left" size={17} color={colors.mutedForeground} />
+      <Feather name={isArabic ? 'chevron-left' : 'chevron-right'} size={17} color={colors.mutedForeground} />
     </Pressable>
   );
 }
@@ -146,19 +151,20 @@ export function QuickAction({
   tone?: 'teal' | 'gold' | 'blue' | 'rose';
 }) {
   const colors = useColors();
+  const { isArabic } = useI18n();
   const backgrounds = { teal: colors.softTeal, gold: colors.softGold, blue: '#e4eef3', rose: '#f3e5e2' };
   const foregrounds = { teal: colors.primary, gold: colors.accentForeground, blue: '#4d7892', rose: '#9e5e58' };
   return (
     <Pressable
       testID={`quick-${label}`}
       onPress={onPress}
-      style={({ pressed }) => [styles.quickAction, { backgroundColor: backgrounds[tone] }, pressed && styles.pressed]}
+       style={({ pressed }) => [styles.quickAction, { backgroundColor: backgrounds[tone], alignItems: isArabic ? 'flex-end' : 'flex-start' }, pressed && styles.pressed]}
     >
       <View style={[styles.quickIcon, { backgroundColor: colors.card }]}>
         <Feather name={icon} size={18} color={foregrounds[tone]} />
       </View>
-      <Text style={[styles.quickLabel, { color: colors.foreground }]}>{label}</Text>
-      <Text style={[styles.quickSubtitle, { color: colors.mutedForeground }]}>{subtitle}</Text>
+      <Text style={[styles.quickLabel, { color: colors.foreground, textAlign: isArabic ? 'right' : 'left' }]}>{label}</Text>
+      <Text style={[styles.quickSubtitle, { color: colors.mutedForeground, textAlign: isArabic ? 'right' : 'left' }]}>{subtitle}</Text>
     </Pressable>
   );
 }

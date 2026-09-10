@@ -6,6 +6,9 @@ export type DhikrEntry = {
   translation: string;
   repeat: number;
   source: string;
+  /** English meaning/metadata supplied alongside the preserved Arabic source. */
+  translationEn?: string;
+  sourceEn?: string;
 };
 
 export const adhkarSets: Record<AdhkarPeriod, DhikrEntry[]> = {
@@ -508,5 +511,12 @@ export const adhkarCategories = [
   { id: 'prayer' as AdhkarPeriod, arabic: 'بعد الصلاة', english: 'After Prayer', icon: 'heart', count: '8 أذكار' },
   { id: 'sleep' as AdhkarPeriod, arabic: 'أذكار النوم', english: 'Before Sleep', icon: 'moon', count: '13 ذكراً' },
 ];
+
+export const adhkarCategoryCopy: Record<AdhkarPeriod, { en: string; countEn: string }> = {
+  morning: { en: 'Morning Adhkar', countEn: '24 supplications' },
+  evening: { en: 'Evening Adhkar', countEn: '24 supplications' },
+  prayer: { en: 'After Prayer', countEn: '8 supplications' },
+  sleep: { en: 'Before Sleep', countEn: '13 supplications' },
+};
 
 export const adhkarAttribution = 'النصوص: حصن المسلم لسعيد بن علي القحطاني، عبر Islamic Pro Azkar API (MIT). تشتمل هذه النسخة على كامل أبواب الصباح والمساء، وبعد الصلاة، والنوم في المصدر، مع أعداد التكرار.';

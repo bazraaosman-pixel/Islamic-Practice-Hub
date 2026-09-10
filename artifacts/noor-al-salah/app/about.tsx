@@ -4,6 +4,7 @@ import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { PageHeader, ScreenShell, SectionHeading } from '@/components/NoorUI';
 import { useColors } from '@/hooks/useColors';
+import { useI18n } from '@/lib/i18n';
 
 function AboutInfoRow({
   icon,
@@ -15,15 +16,16 @@ function AboutInfoRow({
   value: string;
 }) {
   const colors = useColors();
+  const { isArabic } = useI18n();
 
   return (
     <View style={[styles.infoRow, { borderBottomColor: colors.border }]}>
       <View style={[styles.infoIcon, { backgroundColor: colors.softTeal }]}>
         <Feather name={icon} size={17} color={colors.primary} />
       </View>
-      <View style={styles.infoCopy}>
-        <Text style={[styles.infoLabel, { color: colors.mutedForeground }]}>{label}</Text>
-        <Text style={[styles.infoValue, { color: colors.foreground }]}>{value}</Text>
+      <View style={[styles.infoCopy, { alignItems: isArabic ? 'flex-end' : 'flex-start' }]}>
+        <Text style={[styles.infoLabel, { color: colors.mutedForeground, textAlign: isArabic ? 'right' : 'left' }]}>{label}</Text>
+        <Text style={[styles.infoValue, { color: colors.foreground, textAlign: isArabic ? 'right' : 'left' }]}>{value}</Text>
       </View>
     </View>
   );
@@ -32,18 +34,19 @@ function AboutInfoRow({
 export default function AboutScreen() {
   const colors = useColors();
   const router = useRouter();
+  const { t, text, isArabic } = useI18n();
 
   return (
     <ScreenShell>
       <PageHeader
-        eyebrow="نور الصلاة"
-        title="عن التطبيق"
-        subtitle="تعرّف على التطبيق ومن يقف خلف تطويره وتصميمه"
+        eyebrow={t('appName')}
+        title={t('about')}
+        subtitle={text('تعرّف على التطبيق ومن يقف خلف تطويره وتصميمه', 'Learn about the app and the people behind its development and design')}
         right={
           <Pressable
             testID="about-back"
             accessibilityRole="button"
-            accessibilityLabel="العودة"
+            accessibilityLabel={t('back')}
             onPress={() => router.back()}
             style={({ pressed }) => [
               styles.backButton,
@@ -51,7 +54,7 @@ export default function AboutScreen() {
               pressed && { opacity: 0.72 },
             ]}
           >
-            <Feather name="arrow-right" size={19} color={colors.foreground} />
+             <Feather name={isArabic ? 'arrow-right' : 'arrow-left'} size={19} color={colors.foreground} />
           </Pressable>
         }
       />
@@ -63,18 +66,18 @@ export default function AboutScreen() {
         <Text style={[styles.brandArabic, { color: colors.cream }]}>نور الصلاة</Text>
         <Text style={[styles.brandEnglish, { color: colors.heroMuted }]}>Noor Al-Salah</Text>
         <Text style={[styles.brandDescription, { color: colors.heroMuted }]}>
-          رفيقك الهادئ للصلاة والذكر، بتجربة عربية بسيطة وقريبة من القلب.
+          {text('رفيقك الهادئ للصلاة والذكر، بتجربة عربية بسيطة وقريبة من القلب.', 'Your calm companion for prayer and remembrance, with a simple experience close to the heart.')}
         </Text>
       </View>
 
       <View style={styles.sectionBlock}>
-        <SectionHeading title="حقوق التطبيق" />
+        <SectionHeading title={text('حقوق التطبيق', 'App information')} />
         <View style={[styles.infoCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <AboutInfoRow icon="code" label="التطوير والتصميم" value="م / بازرعه عثمان محمد علي" />
-          <AboutInfoRow icon="shield" label="الإصدار" value="نور الصلاة · 1.0.0" />
+          <AboutInfoRow icon="code" label={t('development')} value={t('developer')} />
+          <AboutInfoRow icon="shield" label={text('الإصدار', 'Version')} value={`${t('appName')} · 1.0.0`} />
           <View style={styles.infoFooter}>
             <Feather name="heart" size={15} color={colors.gold} />
-            <Text style={[styles.infoFooterText, { color: colors.mutedForeground }]}>صُمّم بعناية ليكون قريباً من يومك</Text>
+            <Text style={[styles.infoFooterText, { color: colors.mutedForeground }]}>{text('صُمّم بعناية ليكون قريباً من يومك', 'Designed with care to fit naturally into your day')}</Text>
           </View>
         </View>
       </View>
@@ -83,8 +86,8 @@ export default function AboutScreen() {
         <View style={[styles.noteIcon, { backgroundColor: colors.card }]}>
           <Feather name="star" size={17} color={colors.accentForeground} />
         </View>
-        <Text style={[styles.noteText, { color: colors.accentForeground }]}>
-          نسأل الله أن يجعل نور الصلاة عوناً لك على المحافظة على صلاتك وذكرك.
+        <Text style={[styles.noteText, { color: colors.accentForeground, textAlign: isArabic ? 'right' : 'left' }]}>
+          {text('نسأل الله أن يجعل نور الصلاة عوناً لك على المحافظة على صلاتك وذكرك.', 'May Noor Al-Salah help you keep your prayer and remembrance.')}
         </Text>
       </View>
     </ScreenShell>
