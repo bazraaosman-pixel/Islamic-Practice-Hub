@@ -63,7 +63,7 @@ export default function SettingsScreen() {
            <View style={styles.adhanChoices}>
              {(['makkah', 'madinah'] as const).map((choice) => (
                <Pressable key={choice} testID={`adhan-${choice}`} onPress={() => chooseAdhan(choice)} style={[styles.adhanOption, adhan === choice && { backgroundColor: colors.primary }]}>
-                 <Text style={[styles.adhanText, { color: adhan === choice ? colors.primaryForeground : colors.mutedForeground }]}>{choice === 'makkah' ? (language === 'ar' ? 'أذان مكة' : 'Makkah Adhan') : (language === 'ar' ? 'أذان المدينة' : 'Madinah Adhan')}</Text>
+                  <Text style={[styles.adhanText, { color: adhan === choice ? colors.primaryForeground : colors.mutedForeground }]}>{choice === 'makkah' ? (language === 'ar' ? 'أذان الحرم المكي' : 'Makkah Adhan') : (language === 'ar' ? 'أذان الحرم المدني' : 'Madinah Adhan')}</Text>
                </Pressable>
              ))}
              <Pressable accessibilityLabel={playback.playing ? text('إيقاف المعاينة', 'Pause preview') : text('تشغيل المعاينة', 'Preview')} testID="adhan-preview" onPress={preview} style={[styles.previewButton, { borderColor: colors.border }]}>

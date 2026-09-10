@@ -57,7 +57,7 @@ async function schedulePrayerNotificationsUnsafe(location: LocationData, method:
   await cancelPrayerNotificationsUnsafe();
   const permission = await Notifications.requestPermissionsAsync();
   if (!permission.granted) throw new Error('notifications-denied');
-  if (Platform.OS === 'android') await Notifications.setNotificationChannelAsync(CHANNEL_IDS[adhan], { name: language === 'ar' ? (adhan === 'makkah' ? 'أذان مكة' : 'أذان المدينة') : (adhan === 'makkah' ? 'Makkah Adhan' : 'Madinah Adhan'), importance: Notifications.AndroidImportance.HIGH, sound: ADHAN_SOUNDS[adhan] });
+  if (Platform.OS === 'android') await Notifications.setNotificationChannelAsync(CHANNEL_IDS[adhan], { name: language === 'ar' ? (adhan === 'makkah' ? 'أذان الحرم المكي' : 'أذان الحرم المدني') : (adhan === 'makkah' ? 'Makkah Adhan' : 'Madinah Adhan'), importance: Notifications.AndroidImportance.HIGH, sound: ADHAN_SOUNDS[adhan] });
   const now = new Date();
   const ids: string[] = [];
   for (let offset = 0; offset < 7; offset += 1) {
