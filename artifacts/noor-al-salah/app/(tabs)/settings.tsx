@@ -1,6 +1,6 @@
 import { Feather } from '@expo/vector-icons';
 import React, { useEffect, useState } from 'react';
-import { Pressable, StyleSheet, Switch, Text, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, Switch, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { setAudioModeAsync, useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
 import { PageHeader, ScreenShell } from '@/components/NoorUI';
@@ -44,6 +44,41 @@ export default function SettingsScreen() {
   const isEnglish = language === 'en';
   const themeOptions: { key: ThemePreference; label: string }[] = [{ key: 'light', label: isEnglish ? 'Light' : 'فاتح' }, { key: 'dark', label: isEnglish ? 'Dark' : 'داكن' }, { key: 'system', label: isEnglish ? 'System' : 'النظام' }];
   const text = (ar: string, en: string) => isEnglish ? en : ar;
+  const openCalculationMethodPicker = () => {
+    Alert.alert(
+      text('طريقة حساب مواقيت الصلاة', 'Prayer time calculation method'),
+      text('اختر الطريقة التي تريد استخدامها لحساب مواقيت الصلاة.', 'Choose the method used to calculate prayer times.'),
+      [
+        { text: text('رابطة العالم الإسلامي', 'Muslim World League'), onPress: () => setCalculationMethod('muslimWorldLeague') },
+        { text: text('الهيئة المصرية العامة للمساحة', 'Egyptian General Authority of Survey'), onPress: () => setCalculationMethod('egyptian') },
+        { text: text('إلغاء', 'Cancel'), style: 'cancel' },
+      ],
+    );
+  };
+  const openMadhabPicker = () => {
+    Alert.alert(
+      text('المذهب لحساب صلاة العصر', 'Asr juristic method'),
+      text('اختر طريقة حساب وقت صلاة العصر.', 'Choose the method used to calculate the Asr prayer time.'),
+      [
+        { text: text('الشافعي', 'Shafi'), onPress: () => setMadhab('shafi') },
+        { text: text('الحنفي', 'Hanafi'), onPress: () => setMadhab('hanafi') },
+        { text: text('إلغاء', 'Cancel'), style: 'cancel' },
+      ],
+    );
+  };
+  const openQiblaCalibration = () => {
+    Alert.alert(
+      text('معايرة القبلة', 'Qibla calibration'),
+      text(
+        'حرّك هاتفك على شكل الرقم ٨ بعيداً عن المعادن، ثم افتح بوصلة القبلة للتحقق من الاتجاه.',
+        'Move your phone in a figure-eight away from metal objects, then open the Qibla compass to verify the direction.',
+      ),
+      [
+        { text: text('فتح بوصلة القبلة', 'Open Qibla compass'), onPress: () => router.push('/qibla') },
+        { text: text('إلغاء', 'Cancel'), style: 'cancel' },
+      ],
+    );
+  };
   return (
     <ScreenShell>
       <PageHeader eyebrow={text('خصّص تجربتك', 'MAKE IT YOURS')} title={text('الإعدادات', 'Settings')} subtitle={text('كل ما تحتاجه لتجعل نور الصلاة أقرب إليك', 'Everything you need to make Noor Al-Salah yours')} right={<View style={[styles.headerIcon, { backgroundColor: colors.softGold }]}><Feather name="sliders" size={19} color={colors.accentForeground} /></View>} />
@@ -56,9 +91,9 @@ export default function SettingsScreen() {
          {prayerNotificationsError ? <Text accessibilityRole="alert" style={[styles.notificationError, { color: colors.accentForeground }]}>{text('تعذر تفعيل تنبيهات الصلاة. حاول مرة أخرى.', 'Prayer notifications could not be enabled. Please try again.')}</Text> : null}
       </View>
       <View style={[styles.settingGroup, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <SettingRow language={language} icon="clock" title={text('طريقة الحساب', 'Calculation method')} subtitle={calculationMethod === 'muslimWorldLeague' ? text('رابطة العالم الإسلامي', 'Muslim World League') : text('الطريقة المصرية', 'Egyptian')} onPress={() => setCalculationMethod(calculationMethod === 'muslimWorldLeague' ? 'egyptian' : 'muslimWorldLeague')} />
-          <SettingRow language={language} icon="sun" title={text('المذهب للعصر', 'Asr madhab')} subtitle={madhab === 'shafi' ? text('الشافعي', 'Shafi') : text('الحنفي', 'Hanafi')} onPress={() => setMadhab(madhab === 'shafi' ? 'hanafi' : 'shafi')} />
-         <SettingRow language={language} icon="compass" title={text('معايرة القبلة', 'Qibla calibration')} subtitle={text('مساعدة واتجاه الجهاز', 'Device guidance and direction')} />
+           <SettingRow language={language} icon="clock" title={text('طريقة الحساب', 'Calculation method')} subtitle={calculationMethod === 'muslimWorldLeague' ? text('رابطة العالم الإسلامي', 'Muslim World League') : text('الهيئة المصرية العامة للمساحة', 'Egyptian General Authority of Survey')} onPress={openCalculationMethodPicker} />
+           <SettingRow language={language} icon="sun" title={text('المذهب للعصر', 'Asr juristic method')} subtitle={madhab === 'shafi' ? text('الشافعي', 'Shafi') : text('الحنفي', 'Hanafi')} onPress={openMadhabPicker} />
+          <SettingRow language={language} icon="compass" title={text('معايرة القبلة', 'Qibla calibration')} subtitle={text('مساعدة واتجاه الجهاز', 'Device guidance and direction')} onPress={openQiblaCalibration} />
           <SettingRow language={language} icon="volume-2" title={text('صوت الأذان', 'Adhan sound')} subtitle={text('اختر واستمع للمعاينة', 'Choose and preview')}>
            <View style={styles.adhanChoices}>
              {(['makkah', 'madinah'] as const).map((choice) => (
