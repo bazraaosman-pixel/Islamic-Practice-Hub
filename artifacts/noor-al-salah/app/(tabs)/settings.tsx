@@ -1,6 +1,7 @@
 import { Feather } from '@expo/vector-icons';
 import React from 'react';
-import { Alert, Pressable, StyleSheet, Switch, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Switch, Text, View } from 'react-native';
+import { useRouter } from 'expo-router';
 import { PageHeader, ScreenShell } from '@/components/NoorUI';
 import { useColors } from '@/hooks/useColors';
 import { ThemePreference, usePreferences } from '@/context/PreferencesContext';
@@ -12,6 +13,7 @@ function SettingRow({ icon, title, subtitle, children, onPress }: { icon: React.
 
 export default function SettingsScreen() {
   const colors = useColors();
+  const router = useRouter();
   const { theme, language, city, prayerNotifications, setTheme, setLanguage, setPrayerNotifications } = usePreferences();
   const themeOptions: { key: ThemePreference; label: string }[] = [{ key: 'light', label: 'فاتح' }, { key: 'dark', label: 'داكن' }, { key: 'system', label: 'النظام' }];
   return (
@@ -29,7 +31,7 @@ export default function SettingsScreen() {
         <SettingRow icon="compass" title="معايرة القبلة" subtitle="مساعدة واتجاه الجهاز" />
         <SettingRow icon="volume-2" title="صوت الأذان" subtitle="سيتم ضبطه مع التنبيهات" />
       </View>
-      <Pressable testID="about-app" onPress={() => Alert.alert('نور الصلاة', 'الإصدار الأولي · 1.0.0')} style={[styles.aboutRow, { borderColor: colors.border, backgroundColor: colors.card }]}><Feather name="info" size={17} color={colors.primary} /><Text style={[styles.aboutText, { color: colors.foreground }]}>عن نور الصلاة</Text><Text style={[styles.version, { color: colors.mutedForeground }]}>v1.0.0</Text></Pressable>
+      <Pressable testID="about-app" onPress={() => router.push('/about')} style={({ pressed }) => [styles.aboutRow, { borderColor: colors.border, backgroundColor: colors.card }, pressed && { opacity: 0.72 }]}><Feather name="info" size={17} color={colors.primary} /><Text style={[styles.aboutText, { color: colors.foreground }]}>عن نور الصلاة</Text><Text style={[styles.version, { color: colors.mutedForeground }]}>v1.0.0</Text><Feather name="chevron-left" size={17} color={colors.mutedForeground} /></Pressable>
     </ScreenShell>
   );
 }
