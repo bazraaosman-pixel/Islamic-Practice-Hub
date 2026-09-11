@@ -4,8 +4,12 @@
   },
   "build": {
     "preview": {
+      "node": "20.x",
       "android": {
         "buildType": "apk"
+      },
+      "env": {
+        "EAS_BUILD_SKIP_LOCKFILE_CHECK": "1"
       }
     }
   }
