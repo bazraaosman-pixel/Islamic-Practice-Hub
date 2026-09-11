@@ -1,16 +1,18 @@
 {
   "cli": {
-    "version": ">= 10.0.0"
+    "version": ">= 10.0.0",
+    "appVersionSource": "remote"
   },
   "build": {
     "preview": {
       "android": {
-        "buildType": "apk"
+        "buildType": "apk",
+        "gradleCommand": ":app:assembleRelease"
       },
       "env": {
-        "EAS_BUILD_SKIP_LOCKFILE_CHECK": "1"
-      },
-      "npmInstallCommand": "npm install --legacy-peer-deps"
+        "EAS_BUILD_SKIP_LOCKFILE_CHECK": "1",
+        "NPM_CONFIG_LEGACY_PEER_DEPS": "true"
+      }
     }
   }
 }
