@@ -4,7 +4,6 @@
   },
   "build": {
     "preview": {
-      "node": "20.x",
       "android": {
         "buildType": "apk"
       },
