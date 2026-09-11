@@ -1,10 +1,7 @@
 {
   "expo": {
-    "extra": {
-      "eas": {
-        "projectId": "c5ea2d1d-cf98-4e27-bb54-19e95cd36699"
-      }
-    },
+    "name": "Bazz",
+    "slug": "bazz",
     "android": {
       "package": "com.baz1982.workspace"
     }
